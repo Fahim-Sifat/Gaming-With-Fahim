@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fully Interactive Chess Game (vs. AI)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+        :root {
+            --light-square: #f0d9b5; /* Light Wood */
+            --dark-square: #b58863; /* Dark Wood */
+            --highlight-move: #90ee90; /* Light Green */
+            --highlight-select: #a87e5b; /* Slightly darker than dark square */
+            --highlight-check: #ff4444; /* Bright Red for Check */
+            --white-piece-color: #ffffff;
+            --black-piece-color: #000000;
+            --font-family: 'Roboto Mono', monospace;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #302e2b;
+            font-family: var(--font-family);
+            color: var(--light-square);
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: #ffffff;
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #game-info {
+            background-color: #262421;
+            padding: 15px 30px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            min-height: 70px; /* Ensure space for messages */
+        }
+
+        #turn-message {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        
+        #status-message {
+            font-size: 1rem;
+            color: #ffdd00;
+            font-weight: 700;
+        }
+
+        .chessboard {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            width: 90vmin; /* Responsive size based on viewport */
+            max-width: 600px;
+            height: 90vmin;
+            max-height: 600px;
+            border: 8px solid #4a4641;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .square {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.15s ease;
+        }
+
+        .square.light {
+            background-color: var(--light-square);
+        }
+
+        .square.dark {
+            background-color: var(--dark-square);
+        }
+
+        .square.selected {
+            box-shadow: inset 0 0 15px rgba(255, 255, 0, 0.8);
+            background-color: var(--highlight-select) !important;
+        }
+        
+        /* Highlight the King's square if it is in check */
+        .square.check {
+            background-color: var(--highlight-check) !important;
+        }
+
+        .square.highlight {
+            background-color: var(--highlight-move) !important;
+            opacity: 0.9;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .piece {
+            font-size: clamp(3.5vmin, 8vw, 48px); /* Responsive piece size */
+            line-height: 1;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .piece.white { color: var(--white-piece-color); }
+        .piece.black { color: var(--black-piece-color); }
+
+        /* Style for the AI's move indication */
+        .square.ai-move {
+            background-color: #556B2F !important; /* Dark Olive Green */
+            border: 2px solid #ffdd00;
+        }
+
+
+        #reset-button {
+            margin-top: 20px;
+            padding: 10px 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(145deg, #e44d26, #a1351c);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.2s;
+        }
+
+        #reset-button:hover {
+            background: linear-gradient(145deg, #ff6a40, #b84022);
+            transform: translateY(-2px);
+        }
+        #reset-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Interactive Chess Game (vs. AI)</h1>
+
+    <div id="game-info">
+        <div id="turn-message">White's Turn</div>
+        <div id="status-message"></div>
+    </div>
+
+    <div class="chessboard" id="chessboard">
+        <!-- Squares will be generated here by JavaScript -->
+    </div>
+
+    <button id="reset-button">Reset Game</button>
+
+    <script>
+        // --- Core Game Data and Setup ---
+
+        const boardElement = document.getElementById('chessboard');
+        const turnMessageElement = document.getElementById('turn-message');
+        const statusMessageElement = document.getElementById('status-message');
+        const resetButton = document.getElementById('reset-button');
+
+        // Piece Unicode Mapping
+        const pieces = {
+            'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
+            'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟︎'
+        };
+
+        // Initial FEN for standard chess board
+        const initialFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
+
+        let board = []; // 8x8 array of piece codes (e.g., 'wP', 'bR')
+        let turn = 'w'; // 'w' for White, 'b' for Black
+        let selectedSquare = null; // [row, col] of the selected piece
+        let gameOver = false;
+        let isAITurn = false; // Flag to block human input during AI move
+        let lastAIMove = null; // Stores [r1, c1, r2, c2] of the last AI move for highlighting
+
+
+        // Global Utility Functions
+
+        /** Creates a deep copy of the current 8x8 board array. */
+        function copyBoard(currentBoard) {
+            return currentBoard.map(row => [...row]);
+        }
+
+        /** Converts FEN string (piece notation) into the 8x8 board array. */
+        function setupBoard(fen) {
+            board = [];
+            const fenRows = fen.split(' ')[0].split('/');
+            for (let r = 0; r < 8; r++) {
+                board[r] = [];
+                let col = 0;
+                for (const char of fenRows[r]) {
+                    if (/[1-8]/.test(char)) {
+                        // Empty squares
+                        const emptyCount = parseInt(char);
+                        for (let i = 0; i < emptyCount; i++) {
+                            board[r][col++] = null;
+                        }
+                    } else {
+                        // Piece
+                        const color = char === char.toUpperCase() ? 'w' : 'b';
+                        const pieceCode = char.toUpperCase();
+                        board[r][col++] = color + pieceCode;
+                    }
+                }
+            }
+        }
+
+        /** Renders the current board state to the HTML. */
+        function renderBoard() {
+            boardElement.innerHTML = ''; // Clear existing board
+            
+            const [kingR, kingC] = findKing(board, turn);
+            const isCurrentKingInCheck = isKingInCheck(board, turn);
+
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const squareElement = document.createElement('div');
+                    squareElement.className = 'square';
+                    squareElement.dataset.row = r;
+                    squareElement.dataset.col = c;
+                    
+                    // Determine light or dark color
+                    const isLight = (r + c) % 2 === 0;
+                    squareElement.classList.add(isLight ? 'light' : 'dark');
+
+                    const pieceCode = board[r][c];
+                    if (pieceCode) {
+                        const color = pieceCode[0];
+                        const type = pieceCode[1];
+                        const pieceChar = pieces[color === 'w' ? type : type.toLowerCase()];
+
+                        const pieceElement = document.createElement('span');
+                        pieceElement.className = `piece ${color === 'w' ? 'white' : 'black'}`;
+                        pieceElement.textContent = pieceChar;
+                        squareElement.appendChild(pieceElement);
+                    }
+
+                    // Add click handler
+                    if (!gameOver) {
+                        squareElement.addEventListener('click', () => handleClick(r, c));
+                    }
+
+                    // Highlight selected square
+                    if (selectedSquare && selectedSquare[0] === r && selectedSquare[1] === c) {
+                        squareElement.classList.add('selected');
+                    }
+                    
+                    // Highlight the King if it is in check
+                    if (isCurrentKingInCheck && r === kingR && c === kingC) {
+                        squareElement.classList.add('check');
+                    }
+
+                    // Highlight the last AI move
+                    if (lastAIMove) {
+                        const [ar1, ac1, ar2, ac2] = lastAIMove;
+                        if ((r === ar1 && c === ac1) || (r === ar2 && c === ac2)) {
+                            squareElement.classList.add('ai-move');
+                        }
+                    }
+
+                    boardElement.appendChild(squareElement);
+                }
+            }
+            updateMessage();
+        }
+
+        /** Updates the turn and status messages displayed above the board. */
+        function updateMessage() {
+            if (gameOver) {
+                const winner = turn === 'w' ? 'Black' : 'White';
+                if (isKingInCheck(board, turn)) {
+                    turnMessageElement.textContent = `Game Over!`;
+                    statusMessageElement.textContent = `${winner} wins by Checkmate!`;
+                    statusMessageElement.style.color = 'var(--highlight-check)';
+                } else {
+                    turnMessageElement.textContent = `Game Over!`;
+                    statusMessageElement.textContent = `Stalemate! (Draw)`;
+                    statusMessageElement.style.color = '#ffdd00';
+                }
+                return;
+            }
+            
+            turnMessageElement.textContent = `${turn === 'w' ? "White" : "Black (AI)"}'s Turn`;
+            turnMessageElement.style.color = turn === 'w' ? 'var(--white-piece-color)' : 'var(--black-piece-color)';
+            
+            statusMessageElement.textContent = '';
+            statusMessageElement.style.color = '#ffdd00';
+
+            // Check if the current player's King is in check
+            if (isKingInCheck(board, turn)) {
+                statusMessageElement.textContent = `${turn === 'w' ? "White" : "Black"} is in CHECK!`;
+                statusMessageElement.style.color = 'var(--highlight-check)';
+            } else if (isAITurn) {
+                 statusMessageElement.textContent = `AI is thinking...`;
+            }
+        }
+
+        // --- Core Chess Logic: King Safety and Legality ---
+
+        /** Finds the [row, col] of the King for the given color on the given board. */
+        function findKing(tempBoard, color) {
+            const kingCode = color + 'K';
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    if (tempBoard[r][c] === kingCode) {
+                        return [r, c];
+                    }
+                }
+            }
+            return [null, null];
+        }
+
+        /** * Checks if a move from [r1, c1] to [r2, c2] is geometrically valid for the piece 
+         * on a given board, without considering check or checkmate.
+         */
+        function isGeometricMoveValid(r1, c1, r2, c2, tempBoard) {
+            const pieceCode = tempBoard[r1][c1];
+            if (!pieceCode) return false;
+
+            const color = pieceCode[0];
+            const type = pieceCode[1];
+            const targetPiece = tempBoard[r2][c2];
+
+            // 1. Cannot move to the same square
+            if (r1 === r2 && c1 === c2) return false;
+
+            // 2. Cannot capture your own piece
+            if (targetPiece && targetPiece[0] === color) return false;
+
+            // Absolute delta values
+            const dr = Math.abs(r2 - r1);
+            const dc = Math.abs(c2 - c1);
+
+            switch (type) {
+                case 'P': // Pawn
+                    const direction = color === 'w' ? -1 : 1;
+                    const rowDiff = r2 - r1;
+
+                    // Forward 1 step
+                    if (rowDiff === direction && dc === 0 && targetPiece === null) return true;
+
+                    // Initial 2 steps (only from starting rank and no piece in between)
+                    const startRank = color === 'w' ? 6 : 1;
+                    if (r1 === startRank && rowDiff === 2 * direction && dc === 0 && targetPiece === null) {
+                        // Check if the square in front is also empty
+                        const intermediateRow = r1 + direction;
+                        if (tempBoard[intermediateRow][c1] === null) return true;
+                    }
+
+                    // Diagonal capture
+                    if (rowDiff === direction && dc === 1 && targetPiece && targetPiece[0] !== color) return true;
+                    
+                    return false;
+
+                case 'R': // Rook (Horizontal or Vertical)
+                    if (dr === 0 && dc > 0 || dr > 0 && dc === 0) {
+                        return !isPathBlocked(r1, c1, r2, c2, tempBoard);
+                    }
+                    return false;
+
+                case 'B': // Bishop (Diagonal)
+                    if (dr === dc && dr > 0) {
+                        return !isPathBlocked(r1, c1, r2, c2, tempBoard);
+                    }
+                    return false;
+
+                case 'Q': // Queen (Rook + Bishop)
+                    if (dr === 0 && dc > 0 || dr > 0 && dc === 0 || dr === dc && dr > 0) {
+                        return !isPathBlocked(r1, c1, r2, c2, tempBoard);
+                    }
+                    return false;
+
+                case 'N': // Knight ('L' shape)
+                    if (dr === 1 && dc === 2 || dr === 2 && dc === 1) return true;
+                    return false;
+
+                case 'K': // King (1 step in any direction)
+                    if (dr <= 1 && dc <= 1) return true;
+                    return false;
+
+                default:
+                    return false;
+            }
+        }
+
+        /** Checks if there are any pieces between [r1, c1] and [r2, c2] (for R, B, Q). */
+        function isPathBlocked(r1, c1, r2, c2, tempBoard) {
+            const dr = Math.sign(r2 - r1);
+            const dc = Math.sign(c2 - c1);
+            
+            let r = r1 + dr;
+            let c = c1 + dc;
+            
+            while (r !== r2 || c !== c2) {
+                if (tempBoard[r][c] !== null) {
+                    return true; // Path is blocked
+                }
+                r += dr;
+                c += dc;
+            }
+            return false; // Path is clear
+        }
+
+        /** Checks if the King of the given color is in check on the provided board. */
+        function isKingInCheck(tempBoard, kingColor) {
+            const [kingR, kingC] = findKing(tempBoard, kingColor);
+            if (kingR === null) return false;
+
+            const attackingColor = kingColor === 'w' ? 'b' : 'w';
+
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const piece = tempBoard[r][c];
+                    // If square has an opponent's piece
+                    if (piece && piece[0] === attackingColor) {
+                        // Check if this piece can geometrically attack the King's square
+                        // Pass the board to isGeometricMoveValid
+                        if (isGeometricMoveValid(r, c, kingR, kingC, tempBoard)) {
+                            return true; // King is under attack (in check)
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        /** Checks if a move is legal: geometrically valid AND does not result in a self-check. */
+        function isLegalMove(r1, c1, r2, c2, playerColor) {
+            // 1. Basic geometric check
+            if (!isGeometricMoveValid(r1, c1, r2, c2, board)) {
+                return false;
+            }
+
+            // 2. King Safety Check (Crucial for Check/Checkmate logic)
+            
+            // Create a temporary board to simulate the move
+            const tempBoard = copyBoard(board);
+            const movedPiece = tempBoard[r1][c1];
+
+            // Execute the move on the temporary board
+            tempBoard[r2][c2] = movedPiece;
+            tempBoard[r1][c1] = null;
+
+            // Check for Pawn Promotion on the temporary board (Important for evaluation)
+            if (movedPiece[1] === 'P') {
+                if (movedPiece[0] === 'w' && r2 === 0) {
+                    tempBoard[r2][c2] = 'wQ';
+                } else if (movedPiece[0] === 'b' && r2 === 7) {
+                    tempBoard[r2][c2] = 'bQ';
+                }
+            }
+
+            // If the King is in check after the move, the move is illegal
+            if (isKingInCheck(tempBoard, playerColor)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        /** Determines if the current player has any legal moves available. */
+        function hasLegalMoves(playerColor) {
+            for (let r1 = 0; r1 < 8; r1++) {
+                for (let c1 = 0; c1 < 8; c1++) {
+                    const piece = board[r1][c1];
+                    if (piece && piece[0] === playerColor) {
+                        for (let r2 = 0; r2 < 8; r2++) {
+                            for (let c2 = 0; c2 < 8; c2++) {
+                                if (isLegalMove(r1, c1, r2, c2, playerColor)) {
+                                    return true; // Found at least one legal move
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return false; // No legal moves available
+        }
+        
+        /** Highlights valid, non-self-checking moves for the currently selected piece. */
+        function highlightValidMoves() {
+            // Remove all existing highlights
+            document.querySelectorAll('.square').forEach(sq => sq.classList.remove('highlight'));
+            
+            if (!selectedSquare) return;
+
+            const [r1, c1] = selectedSquare;
+            
+            for (let r2 = 0; r2 < 8; r2++) {
+                for (let c2 = 0; c2 < 8; c2++) {
+                    // Use the fully legal move check
+                    if (isLegalMove(r1, c1, r2, c2, turn)) { 
+                        // Find the square element and highlight it
+                        const targetSquare = document.querySelector(`.square[data-row="${r2}"][data-col="${c2}"]`);
+                        if (targetSquare) {
+                            targetSquare.classList.add('highlight');
+                        }
+                    }
+                }
+            }
+        }
+
+        /** Executes the move on the main board and handles turn switch, promotion, and game status checks. */
+        function executeMove(r1, c1, r2, c2) {
+            // 1. Execute move
+            const movedPiece = board[r1][c1];
+            board[r2][c2] = movedPiece; // Move piece to new square (handles capture)
+            board[r1][c1] = null; // Clear old square
+            
+            // 2. Simple Pawn Promotion
+            if (movedPiece[1] === 'P') {
+                if (movedPiece[0] === 'w' && r2 === 0) {
+                    board[r2][c2] = 'wQ'; // Promote to Queen
+                } else if (movedPiece[0] === 'b' && r2 === 7) {
+                    board[r2][c2] = 'bQ'; // Promote to Queen
+                }
+            }
+
+            // 3. Switch turn
+            turn = turn === 'w' ? 'b' : 'w';
+            selectedSquare = null;
+            
+            // 4. Check for game end
+            const hasMoves = hasLegalMoves(turn);
+
+            if (isKingInCheck(board, turn) && !hasMoves) {
+                gameOver = true; // Checkmate
+            } else if (!hasMoves) {
+                gameOver = true; // Stalemate
+            }
+            
+            // 5. Rerender and call AI if necessary
+            renderBoard();
+            
+            // 6. Start AI turn if it's Black's turn and game isn't over
+            if (turn === 'b' && !gameOver) {
+                isAITurn = true; // Block human input
+                setTimeout(makeAIMove, 500); // 500ms delay for effect
+            } else {
+                isAITurn = false;
+            }
+        }
+
+        // --- AI Logic (Greedy Material Advantage) ---
+
+        function getMaterialValue(pieceCode) {
+            if (!pieceCode) return 0;
+            switch (pieceCode[1]) {
+                case 'P': return 10;
+                case 'N': case 'B': return 30;
+                case 'R': return 50;
+                case 'Q': return 90;
+                case 'K': return 900; // High value to discourage unnecessary King moves
+                default: return 0;
+            }
+        }
+
+        /** Evaluates a move based on material gain and checking the opponent. */
+        function evaluateMove(r1, c1, r2, c2) {
+            const targetPiece = board[r2][c2];
+            let score = 0;
+            const playerColor = board[r1][c1][0];
+            const opponentColor = playerColor === 'w' ? 'b' : 'w';
+
+            // 1. Material Gain (Greedy Capture)
+            if (targetPiece) {
+                score += getMaterialValue(targetPiece);
+            }
+            
+            // 2. Put opponent in check (small bonus)
+            const tempBoard = copyBoard(board);
+            tempBoard[r2][c2] = tempBoard[r1][c1];
+            tempBoard[r1][c1] = null;
+
+            if (isKingInCheck(tempBoard, opponentColor)) {
+                score += 5; 
+            }
+
+            // 3. Prioritize promotion (big bonus)
+            if (tempBoard[r2][c2][1] === 'P' && r2 === 7) { // Black promotion
+                score += 80; // Almost Queen value
+            }
+
+            // 4. Random bonus (to prevent repeated moves when scores are equal)
+            score += Math.random() * 0.5;
+
+            return score;
+        }
+
+
+        function makeAIMove() {
+            if (turn !== 'b' || gameOver) {
+                isAITurn = false;
+                renderBoard();
+                return;
+            }
+
+            const allLegalMoves = [];
+            
+            // 1. Collect all legal moves for Black
+            for (let r1 = 0; r1 < 8; r1++) {
+                for (let c1 = 0; c1 < 8; c1++) {
+                    const piece = board[r1][c1];
+                    if (piece && piece[0] === 'b') {
+                        for (let r2 = 0; r2 < 8; r2++) {
+                            for (let c2 = 0; c2 < 8; c2++) {
+                                if (isLegalMove(r1, c1, r2, c2, 'b')) {
+                                    allLegalMoves.push({ r1, c1, r2, c2 });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (allLegalMoves.length === 0) {
+                // Should have been caught by hasLegalMoves, but ensures safety
+                isAITurn = false;
+                gameOver = true;
+                renderBoard();
+                return;
+            }
+
+            // 2. Evaluate all legal moves
+            let bestMove = null;
+            let maxScore = -Infinity;
+
+            for (const move of allLegalMoves) {
+                const score = evaluateMove(move.r1, move.c1, move.r2, move.c2);
+                if (score > maxScore) {
+                    maxScore = score;
+                    bestMove = move;
+                }
+            }
+
+            // 3. Execute the best move found
+            if (bestMove) {
+                lastAIMove = [bestMove.r1, bestMove.c1, bestMove.r2, bestMove.c2];
+                executeMove(bestMove.r1, bestMove.c1, bestMove.r2, bestMove.c2);
+            } else {
+                // If somehow no best move found (shouldn't happen), try a random one
+                const randomIndex = Math.floor(Math.random() * allLegalMoves.length);
+                const randomMove = allLegalMoves[randomIndex];
+                lastAIMove = [randomMove.r1, randomMove.c1, randomMove.r2, randomMove.c2];
+                executeMove(randomMove.r1, randomMove.c1, randomMove.r2, randomMove.c2);
+            }
+        }
+
+
+        // --- Event Handlers ---
+
+        /** Main click handler for a square. */
+        function handleClick(r, c) {
+            if (gameOver || isAITurn) return; // Prevent clicking during AI turn
+
+            // Remove AI move highlight immediately on human click
+            lastAIMove = null;
+            
+            const pieceCode = board[r][c];
+            
+            // 1. If a square is already selected (for movement)
+            if (selectedSquare) {
+                const [r1, c1] = selectedSquare;
+
+                // A. Deselect if clicking the same piece
+                if (r1 === r && c1 === c) {
+                    selectedSquare = null;
+                    renderBoard();
+                    return;
+                }
+
+                // B. Attempt move
+                if (isLegalMove(r1, c1, r, c, turn)) {
+                    executeMove(r1, c1, r, c);
+                    return;
+                }
+            }
+
+            // 2. If no square selected, and the clicked square has a piece of the current turn's color (for selection)
+            if (pieceCode && pieceCode[0] === turn) {
+                selectedSquare = [r, c];
+                renderBoard(); // Rerender to show selection
+                highlightValidMoves(); // Highlight potential targets
+            } else {
+                // If it was an illegal move or clicking an empty square, just clear selection
+                selectedSquare = null;
+                renderBoard();
+            }
+        }
+        
+        /** Resets the game to the initial state. */
+        function resetGame() {
+            setupBoard(initialFen);
+            turn = 'w';
+            selectedSquare = null;
+            gameOver = false;
+            isAITurn = false;
+            lastAIMove = null;
+            renderBoard();
+        }
+
+        // --- Initialization ---
+
+        // Set up the board on load
+        setupBoard(initialFen);
+        renderBoard();
+
+        // Set up reset button handler
+        resetButton.addEventListener('click', resetGame);
+        
+    </script>
+</body>
+</html>
