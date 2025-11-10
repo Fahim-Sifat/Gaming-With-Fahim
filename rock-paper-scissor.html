@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock Paper Scissors</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Custom styles for aesthetic enhancements */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a2e; /* Dark background */
+        }
+        .choice-button {
+            transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+        }
+        .choice-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(100, 116, 139, 0.5), 0 4px 6px -4px rgba(100, 116, 139, 0.5);
+        }
+        .choice-button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-xl mx-auto bg-[#2e3a59] p-8 rounded-xl shadow-2xl text-white">
+
+        <!-- Title -->
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-center mb-6 text-indigo-300 tracking-wider">
+            Rock, Paper, Scissors!
+        </h1>
+
+        <!-- Scoreboard -->
+        <div class="flex justify-around items-center bg-[#1a2035] p-4 rounded-lg mb-8 shadow-inner">
+            <div class="text-center">
+                <p class="text-sm uppercase font-semibold text-gray-400">You</p>
+                <p id="user-score" class="text-4xl font-bold text-green-400 mt-1">0</p>
+            </div>
+            <div class="text-center text-2xl font-extrabold text-yellow-400">VS</div>
+            <div class="text-center">
+                <p class="text-sm uppercase font-semibold text-gray-400">Computer</p>
+                <p id="computer-score" class="text-4xl font-bold text-red-400 mt-1">0</p>
+            </div>
+        </div>
+
+        <!-- Result Display -->
+        <div id="result-area" class="text-center mb-8 h-20 flex flex-col justify-center">
+            <p id="message" class="text-xl font-medium text-gray-200">
+                Make your move to start the game.
+            </p>
+            <div id="choices-display" class="mt-2 flex justify-center space-x-4 text-2xl font-semibold">
+                <!-- Choices will be shown here (e.g., 👊 vs ✋) -->
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div id="choices" class="flex justify-center space-x-4 sm:space-x-8">
+            <button id="rock" class="choice-button flex flex-col items-center p-4 bg-gray-700 hover:bg-gray-600 rounded-lg w-24 sm:w-32" onclick="playGame('rock')">
+                <i class="fas fa-hand-rock text-3xl sm:text-4xl mb-2 text-red-300"></i>
+                <span class="text-sm font-semibold">Rock</span>
+            </button>
+
+            <button id="paper" class="choice-button flex flex-col items-center p-4 bg-gray-700 hover:bg-gray-600 rounded-lg w-24 sm:w-32" onclick="playGame('paper')">
+                <i class="fas fa-hand-paper text-3xl sm:text-4xl mb-2 text-blue-300"></i>
+                <span class="text-sm font-semibold">Paper</span>
+            </button>
+
+            <button id="scissors" class="choice-button flex flex-col items-center p-4 bg-gray-700 hover:bg-gray-600 rounded-lg w-24 sm:w-32" onclick="playGame('scissors')">
+                <i class="fas fa-hand-scissors text-3xl sm:text-4xl mb-2 text-green-300"></i>
+                <span class="text-sm font-semibold">Scissors</span>
+            </button>
+        </div>
+        
+        <!-- Reset Button -->
+        <div class="mt-8 text-center">
+             <button onclick="resetGame()" class="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-full text-white font-bold transition duration-150 shadow-lg hover:shadow-xl">
+                Reset Score
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        let userScore = 0;
+        let computerScore = 0;
+        
+        // Element references
+        const userScoreEl = document.getElementById('user-score');
+        const computerScoreEl = document.getElementById('computer-score');
+        const messageEl = document.getElementById('message');
+        const choicesDisplayEl = document.getElementById('choices-display');
+        const choicesMap = {
+            'rock': { icon: '👊', color: 'text-red-300' },
+            'paper': { icon: '✋', color: 'text-blue-300' },
+            'scissors': { icon: '✌️', color: 'text-green-300' },
+        };
+
+        /**
+         * Generates a random choice for the computer.
+         * @returns {string} 'rock', 'paper', or 'scissors'.
+         */
+        function getComputerChoice() {
+            const choices = ['rock', 'paper', 'scissors'];
+            const randomIndex = Math.floor(Math.random() * 3);
+            return choices[randomIndex];
+        }
+
+        /**
+         * Determines the winner of the round.
+         * @param {string} userChoice 
+         * @param {string} computerChoice 
+         * @returns {string} 'win', 'lose', or 'tie'.
+         */
+        function determineWinner(userChoice, computerChoice) {
+            if (userChoice === computerChoice) {
+                return 'tie';
+            }
+            if (
+                (userChoice === 'rock' && computerChoice === 'scissors') ||
+                (userChoice === 'paper' && computerChoice === 'rock') ||
+                (userChoice === 'scissors' && computerChoice === 'paper')
+            ) {
+                return 'win';
+            }
+            return 'lose';
+        }
+        
+        /**
+         * Updates the score and result message in the UI.
+         * @param {string} result - 'win', 'lose', or 'tie'.
+         * @param {string} userChoice 
+         * @param {string} computerChoice 
+         */
+        function updateUI(result, userChoice, computerChoice) {
+            const userIcon = choicesMap[userChoice];
+            const computerIcon = choicesMap[computerChoice];
+
+            // Update scores
+            userScoreEl.textContent = userScore;
+            computerScoreEl.textContent = computerScore;
+
+            // Display choices
+            choicesDisplayEl.innerHTML = `
+                <span class="text-5xl ${userIcon.color}">${userIcon.icon}</span> 
+                <span class="text-xl text-gray-400 mt-2 mx-2">vs</span>
+                <span class="text-5xl ${computerIcon.color}">${computerIcon.icon}</span>
+            `;
+
+            // Update message
+            switch (result) {
+                case 'win':
+                    messageEl.innerHTML = `<span class="text-green-400 font-bold">YOU WIN!</span> ${userChoice} beats ${computerChoice}.`;
+                    break;
+                case 'lose':
+                    messageEl.innerHTML = `<span class="text-red-400 font-bold">YOU LOSE!</span> ${computerChoice} beats ${userChoice}.`;
+                    break;
+                case 'tie':
+                    messageEl.innerHTML = `<span class="text-yellow-400 font-bold">IT'S A TIE!</span> You both chose ${userChoice}.`;
+                    break;
+            }
+        }
+
+        /**
+         * Main function to run the game round.
+         * @param {string} userChoice 
+         */
+        function playGame(userChoice) {
+            const computerChoice = getComputerChoice();
+            const result = determineWinner(userChoice, computerChoice);
+
+            if (result === 'win') {
+                userScore++;
+            } else if (result === 'lose') {
+                computerScore++;
+            }
+            
+            updateUI(result, userChoice, computerChoice);
+        }
+        
+        /**
+         * Resets the game scores.
+         */
+        function resetGame() {
+            userScore = 0;
+            computerScore = 0;
+            
+            userScoreEl.textContent = '0';
+            computerScoreEl.textContent = '0';
+            
+            messageEl.textContent = 'Game reset! Make your move.';
+            choicesDisplayEl.innerHTML = '';
+        }
+
+        // Add touch event listeners to ensure responsiveness on touch devices
+        document.querySelectorAll('.choice-button').forEach(button => {
+            button.addEventListener('touchend', (e) => {
+                e.preventDefault(); // Prevent accidental mouse events
+                playGame(button.id);
+            });
+        });
+
+    </script>
+</body>
+</html>

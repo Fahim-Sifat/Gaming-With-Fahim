@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe Game</title>
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YXL7RK88LR"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-YXL7RK88LR');
+</script>
+    <style>
+/* Basic Reset and Setup */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial Black', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    /* 1. Changed Background to Dark/Black */
+    background-color: #111; 
+    color: #fff; /* Default text color is white */
+}
+
+#game-container {
+    text-align: center;
+}
+
+/* Title and Status Styling */
+h1 {
+    /* 2. Neon/Bright Title */
+    color: #00f0ff; 
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.7);
+    margin-bottom: 5px;
+}
+
+#status {
+    margin-bottom: 15px;
+    font-size: 24px;
+    font-weight: bold;
+    /* 2. Neon Status Text */
+    color: #00ff7f; 
+}
+
+/* Board Layout */
+#board {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+    gap: 5px;
+    margin: 20px auto;
+    /* Darker, more defined border */
+    border: 5px solid #444; 
+    width: 315px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Slight shadow effect */
+}
+
+.cell {
+    /* Cell background darker than the body but not pure black */
+    background-color: #222;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 60px; /* Larger font size for impact */
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+    border: 1px solid #444; /* Subtle separation lines */
+}
+
+/* Hover Effect for cells */
+.cell:not(:empty):hover {
+    cursor: not-allowed;
+}
+.cell:empty:hover {
+    background-color: #333;
+}
+
+/* Custom colors for X and O */
+.cell:contains("X") {
+    color: #ff00ff; /* Magenta for X */
+    text-shadow: 0 0 8px rgba(255, 0, 255, 0.8);
+}
+.cell:contains("O") {
+    color: #ffff00; /* Yellow for O */
+    text-shadow: 0 0 8px rgba(255, 255, 0, 0.8);
+}
+
+/* Status and Button Styling */
+#restart-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #00ccff; /* Bright blue button */
+    color: #111;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+    font-weight: bold;
+}
+
+#restart-button:hover {
+    background-color: #0099ff;
+}
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Tic-Tac-Toe</h1>
+        <div id="status">Player X's Turn</div>
+        
+        <div id="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+
+        <button id="restart-button">Restart Game</button>
+    </div>
+<script>
+// Game State Variables
+let gameActive = true;
+let currentPlayer = "X";
+let gameState = ["", "", "", "", "", "", "", "", ""]; // Represents the 9 cells
+const computerPlayer = "O";
+const humanPlayer = "X"; // Player X is the human
+
+// Winning combinations (indexes of the gameState array)
+const winningConditions = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+    [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+    [0, 4, 8], [2, 4, 6]             // Diagonals
+];
+
+// DOM Elements
+const statusDisplay = document.querySelector('#status');
+const cells = document.querySelectorAll('.cell');
+const restartButton = document.querySelector('#restart-button');
+
+// --- Core Functions ---
+
+// Message to display the current player's turn
+const currentPlayerTurn = () => `It's Player ${currentPlayer}'s turn`;
+
+// Function to handle a cell being played
+function handleCellPlayed(clickedCell, clickedCellIndex) {
+    gameState[clickedCellIndex] = currentPlayer;
+    clickedCell.innerHTML = currentPlayer;
+    // Apply styling class (from previous design update)
+    clickedCell.classList.add(currentPlayer); 
+}
+
+// Function to switch between 'X' and 'O'
+function handlePlayerChange() {
+    currentPlayer = currentPlayer === "X" ? "O" : "X";
+    statusDisplay.innerHTML = currentPlayerTurn();
+}
+
+// --- AI Helper Functions ---
+
+// Check if a player has won on the given board state
+function checkWinner(board, player) {
+    for (let i = 0; i < winningConditions.length; i++) {
+        const [a, b, c] = winningConditions[i];
+        if (board[a] === player && board[b] === player && board[c] === player) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// The Minimax Algorithm (The Brain of the AI)
+function minimax(newBoard, depth, isMaximizingPlayer) {
+    // 1. Scoring terminal states
+    if (checkWinner(newBoard, humanPlayer)) {
+        return { score: depth - 10 }; // Human wins (negative score)
+    } else if (checkWinner(newBoard, computerPlayer)) {
+        return { score: 10 - depth }; // Computer wins (positive score)
+    } else if (!newBoard.includes("")) {
+        return { score: 0 }; // Tie
+    }
+
+    // Array of empty spot indices
+    const availableSpots = newBoard.map((val, index) => (val === "" ? index : null)).filter(val => val !== null);
+
+    if (isMaximizingPlayer) {
+        // Computer's turn (Maximizer: seeks highest score)
+        let bestScore = -Infinity;
+        let bestMove = null;
+
+        for (const spot of availableSpots) {
+            newBoard[spot] = computerPlayer;
+            let score = minimax(newBoard, depth + 1, false).score;
+            newBoard[spot] = ""; // Undo move
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = spot;
+            }
+        }
+        return { score: bestScore, index: bestMove };
+    } else {
+        // Human's turn (Minimizer: seeks lowest score)
+        let bestScore = Infinity;
+        let bestMove = null;
+
+        for (const spot of availableSpots) {
+            newBoard[spot] = humanPlayer;
+            let score = minimax(newBoard, depth + 1, true).score;
+            newBoard[spot] = ""; // Undo move
+
+            if (score < bestScore) {
+                bestScore = score;
+                bestMove = spot;
+            }
+        }
+        return { score: bestScore, index: bestMove };
+    }
+}
+
+// Function to find and execute the computer's move
+function computerMove() {
+    if (!gameActive) return;
+
+    // Use Minimax to find the best move
+    const bestMove = minimax(gameState, 0, true).index;
+    
+    if (bestMove !== null) {
+        // Find the cell element using the data-index
+        const computerCell = document.querySelector(`[data-index="${bestMove}"]`);
+        
+        // Execute the move (The player is still 'O' from the last change in handleResultValidation)
+        handleCellPlayed(computerCell, bestMove);
+        
+        // Check for win/draw after computer's move
+        handleResultValidation();
+    }
+}
+
+// Function to check if the game has ended (Win or Draw)
+function handleResultValidation() {
+    let roundWon = false;
+    let winningCondition = null;
+
+    for (let i = 0; i < winningConditions.length; i++) {
+        const condition = winningConditions[i];
+        let a = gameState[condition[0]];
+        let b = gameState[condition[1]];
+        let c = gameState[condition[2]];
+
+        if (a !== '' && a === b && b === c) {
+            roundWon = true;
+            winningCondition = condition;
+            break;
+        }
+    }
+
+    if (roundWon) {
+        statusDisplay.innerHTML = `Player ${currentPlayer} has Won!`;
+        gameActive = false;
+        
+        // Highlight winning cells
+        if (winningCondition) {
+            winningCondition.forEach(index => {
+                document.querySelector(`[data-index="${index}"]`).style.backgroundColor = 'lightgreen';
+            });
+        }
+        return;
+    }
+
+    // Check for a Draw
+    let roundDraw = !gameState.includes("");
+    if (roundDraw) {
+        statusDisplay.innerHTML = `Game is a Draw!`;
+        gameActive = false;
+        return;
+    }
+
+    // Continue game: switch player
+    handlePlayerChange();
+    
+    // ⭐ NEW: If it's now the computer's turn, make it move
+    if (currentPlayer === computerPlayer && gameActive) {
+        // Small delay to let the human player see their move and for a 'thinking' effect
+        setTimeout(computerMove, 500); 
+    }
+}
+
+
+// Main function when a cell is clicked (only called for human 'X' clicks)
+function handleCellClick(event) {
+    const clickedCell = event.target;
+    const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
+
+    // Check if it's the human's turn, the cell is empty, and the game is active
+    if (currentPlayer !== humanPlayer || gameState[clickedCellIndex] !== "" || !gameActive) {
+        return;
+    }
+
+    handleCellPlayed(clickedCell, clickedCellIndex);
+    handleResultValidation();
+}
+
+// Function to reset the game
+function handleRestartGame() {
+    gameActive = true;
+    currentPlayer = "X";
+    gameState = ["", "", "", "", "", "", "", "", ""];
+    statusDisplay.innerHTML = currentPlayerTurn();
+    cells.forEach(cell => {
+        cell.innerHTML = "";
+        cell.style.backgroundColor = '#222'; // Reset cell background
+        cell.classList.remove('X', 'O');
+    });
+    statusDisplay.innerHTML = currentPlayerTurn();
+}
+
+// --- Event Listeners ---
+cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+restartButton.addEventListener('click', handleRestartGame);
+
+// Initial status message
+statusDisplay.innerHTML = currentPlayerTurn();</script>   
+</body>
+</html>
