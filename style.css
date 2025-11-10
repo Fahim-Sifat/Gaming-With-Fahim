@@ -1,0 +1,382 @@
+/* style.css - Dark Aesthetic / Neon Theme */
+
+/* --- 1. Global Reset & Typography --- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+:root {
+    /* Base Dark Colors */
+    --bg-dark: #121212; /* Deep Black/Dark Gray */
+    --bg-surface: #1e1e1e; /* Slightly lighter surface for cards/sections */
+    --text-light: #ffffff; /* General Text */
+    --text-secondary: #aaaaaa; /* Less emphasized text */
+
+    /* Neon Accent Colors */
+    --neon-primary: #00ffc8; /* Cyan/Aqua Neon */
+    --neon-secondary: #ff00ff; /* Magenta Neon */
+    --neon-highlight: #fff000; /* Yellow Neon for ratings */
+    
+    --header-bg: rgba(30, 30, 30, 0.95); /* Semi-transparent surface */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.6;
+    color: var(--text-light);
+    background-color: var(--bg-dark); /* Changed to Black */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+a {
+    text-decoration: none;
+    color: var(--neon-primary);
+}
+
+/* --- 2. Header & Navigation --- */
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 5%;
+    background-color: var(--header-bg);
+    box-shadow: 0 0 15px rgba(0, 255, 200, 0.15); /* Subtle neon glow */
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    backdrop-filter: blur(5px); /* Added blur for a futuristic feel */
+}
+
+.logo {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--neon-primary);
+    text-shadow: 0 0 5px var(--neon-primary);
+}
+
+.main-nav {
+    display: flex;
+    gap: 30px;
+}
+
+.nav-link {
+    font-weight: 500;
+    padding: 5px 0;
+    color: var(--text-light);
+    transition: color 0.3s, text-shadow 0.3s;
+}
+
+.nav-link:hover, .nav-link.active {
+    color: var(--neon-primary);
+    border-bottom: 2px solid var(--neon-primary);
+    text-shadow: 0 0 8px var(--neon-primary);
+}
+
+.user-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.search-bar {
+    padding: 8px 15px;
+    border: 1px solid var(--neon-secondary);
+    background-color: var(--bg-surface);
+    color: var(--text-light);
+    border-radius: 20px;
+    outline: none;
+    width: 200px;
+    transition: all 0.3s;
+}
+
+.search-bar::placeholder {
+    color: var(--text-secondary);
+}
+
+.search-bar:focus {
+    width: 250px;
+    border-color: var(--neon-primary);
+    box-shadow: 0 0 10px rgba(0, 255, 200, 0.5); /* Primary glow on focus */
+}
+
+.btn {
+    padding: 8px 20px;
+    border: 2px solid var(--neon-primary); /* Neon border */
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s, transform 0.1s, box-shadow 0.3s;
+}
+
+.btn-primary {
+    background-color: transparent;
+    color: var(--neon-primary);
+}
+
+.btn-primary:hover {
+    background-color: var(--neon-primary);
+    color: var(--bg-dark); /* Dark text on hover */
+    transform: translateY(-1px);
+    box-shadow: 0 0 15px var(--neon-primary);
+}
+
+
+/* --- 3. Main Content & Hero Section --- */
+.game-lobby {
+    padding: 30px 5%;
+    flex-grow: 1;
+}
+
+/* Hero Feature */
+.hero-feature {
+    margin-bottom: 40px;
+}
+
+.feature-card {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 25px rgba(255, 0, 255, 0.2); /* Secondary color glow */
+    border: 1px solid var(--neon-secondary);
+}
+
+.hero-image {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    display: block;
+    opacity: 0.8;
+}
+
+.hero-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0));
+    color: white;
+    padding: 30px;
+}
+
+.hero-overlay h2 {
+    font-size: 2.5rem;
+    margin-bottom: 5px;
+    color: var(--neon-primary);
+    text-shadow: 0 0 10px var(--neon-primary);
+}
+
+.hero-overlay p {
+    margin-bottom: 15px;
+    font-weight: 300;
+    color: var(--text-secondary);
+}
+
+.btn-hero {
+    background-color: var(--neon-secondary);
+    color: var(--bg-dark);
+    padding: 10px 25px;
+    font-size: 1.1rem;
+    border-radius: 5px;
+    border: none;
+    box-shadow: 0 0 10px var(--neon-secondary);
+}
+
+.btn-hero:hover {
+    background-color: var(--neon-primary);
+    box-shadow: 0 0 20px var(--neon-primary);
+}
+
+/* --- 4. Game Grid Sections (Trending) --- */
+.section-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--neon-primary);
+    margin-bottom: 25px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid var(--neon-secondary);
+    display: inline-block;
+    text-shadow: 0 0 5px rgba(0, 255, 200, 0.5);
+}
+
+.game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.game-card {
+    background-color: var(--bg-surface);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(0, 255, 200, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: relative;
+    border: 1px solid var(--bg-surface);
+}
+
+.game-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 20px rgba(0, 255, 200, 0.5), 0 0 10px var(--neon-primary);
+    border: 1px solid var(--neon-primary);
+}
+
+.game-thumbnail {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+    opacity: 0.8;
+}
+
+.card-info {
+    padding: 15px;
+}
+
+.card-info h4 {
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+.card-meta {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.rating {
+    color: var(--neon-highlight);
+    font-weight: 600;
+    text-shadow: 0 0 5px rgba(255, 240, 0, 0.5);
+}
+
+.card-play-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    background-color: var(--neon-primary);
+    border-radius: 50%;
+    color: var(--bg-dark);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    opacity: 0;
+    transition: opacity 0.3s, box-shadow 0.3s;
+}
+
+.game-card:hover .card-play-btn {
+    opacity: 1;
+    box-shadow: 0 0 20px var(--neon-primary);
+}
+
+
+/* --- 5. Puzzle & Strategy Section (Specific Structure) --- */
+.game-grid-section:last-child .game-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.game-grid-section:last-child span {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    background-color: var(--bg-surface);
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(255, 0, 255, 0.1);
+    transition: transform 0.2s, box-shadow 0.3s;
+    border: 1px solid var(--bg-surface);
+}
+
+.game-grid-section:last-child span:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(255, 0, 255, 0.5), 0 0 10px var(--neon-secondary);
+    border: 1px solid var(--neon-secondary);
+}
+
+.game-grid-section:last-child img {
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-bottom: 10px;
+    border: 2px solid var(--neon-primary);
+}
+
+.game-grid-section:last-child .name {
+    font-size: 1.3rem !important;
+    color: var(--neon-secondary) !important; /* Secondary neon for names */
+    font-weight: 600;
+    margin-bottom: 15px;
+    text-shadow: 0 0 5px rgba(255, 0, 255, 0.5);
+}
+
+.play {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    background-color: var(--neon-primary);
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.3s;
+}
+
+.play a {
+    color: var(--bg-dark);
+    font-weight: 600;
+}
+
+.play:hover {
+    background-color: var(--neon-secondary);
+    box-shadow: 0 0 15px var(--neon-secondary);
+}
+
+/* --- 6. Footer --- */
+.main-footer {
+    background-color: var(--bg-surface);
+    color: var(--text-secondary);
+    padding: 20px 5%;
+    text-align: center;
+    margin-top: 40px;
+    border-top: 1px solid rgba(0, 255, 200, 0.1);
+}
+
+.footer-links a {
+    color: var(--neon-secondary);
+    margin: 0 10px;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+
+.footer-links a:hover {
+    color: var(--neon-primary);
+}
+
+.main-footer p {
+    margin-top: 10px;
+    font-size: 0.85rem;
+}
+
+/* --- 7. Utility & Icons --- */
+.fa-star, .fa-play, .fa-fire, .fa-puzzle-piece {
+    margin-right: 5px;
+    color: var(--neon-highlight);
+}
+
+hr {
+    border: 0;
+    height: 1px;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), var(--neon-primary), rgba(0, 0, 0, 0));
+    margin: 40px 0;
+    opacity: 0.5;
+}
