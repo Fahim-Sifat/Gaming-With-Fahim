@@ -365,6 +365,8 @@
                 height: auto;
             }
             
+           /* ... (omitting unchanged CSS for brevity) ... */
+
             .game-thumbnail {
                 width: 100px; /* Smaller, fixed width for side-by-side view */
                 height: 100px;
@@ -375,8 +377,14 @@
             .card-info {
                 flex-grow: 1;
                 padding: 10px;
+                /* IMPORTANT ADDITION FOR MOBILE LAYOUT: Allows button to fill space */
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
             }
 
+            /* Play button changes for 1-column layout */
+/* ... (omitting unchanged CSS for brevity) ... */
             /* Play button changes for 1-column layout */
             /* Move play button to the right side and make it always visible */
             .card-play-btn {

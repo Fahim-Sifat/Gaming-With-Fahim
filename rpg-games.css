@@ -348,7 +348,36 @@
                 /* Max adjusted padding for fixed header */
                 padding-top: 250px; 
             }
+/* ... (omitting unchanged CSS for brevity) ... */
 
+        /* 3. Mobile Portrait View (max-width: 500px) */
+        @media (max-width: 500px) 
+            
+            /* Header adjustments for a very small screen */
+            
+            
+            {
+            /* ... (omitting unchanged styles) ... */
+
+            .game-thumbnail {
+                width: 100px; /* Smaller, fixed width for side-by-side view */
+                height: 100px;
+                flex-shrink: 0;
+                border-radius: 8px 0 0 8px; /* Correct rounding for the side */
+            }
+            
+            .card-info {
+                flex-grow: 1;
+                padding: 10px;
+                /* IMPORTANT ADDITION FOR MOBILE LAYOUT: Allows button to fill space */
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+
+            /* Play button changes for 1-column layout */
+            /* Move play button to the right side and make it always visible */
+/* ... (omitting unchanged CSS for brevity) ... */
 
 
 
@@ -410,5 +439,5 @@
             .footer-links a {
                 margin: 5px 0;
             }
-    
+        }
     }

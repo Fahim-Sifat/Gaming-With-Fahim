@@ -1,6 +1,7 @@
  /*
         =============================================================
         BASE STYLES
+        ... (omitting unchanged BASE STYLES)
         =============================================================
         */
 
@@ -375,6 +376,10 @@
             .card-info {
                 flex-grow: 1;
                 padding: 10px;
+                /* IMPORTANT ADDITION FOR MOBILE LAYOUT */
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
             }
 
             /* Play button changes for 1-column layout */

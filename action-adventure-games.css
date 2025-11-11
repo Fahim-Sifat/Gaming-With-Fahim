@@ -80,7 +80,7 @@
             transition: padding-top 0.3s, padding-bottom 0.3s, height 0.3s;
         }
 
-        header {
+        header h1 {
             font-size: 1.3rem;
             font-weight: bold;
             color: var(--accent-color);
@@ -92,11 +92,12 @@
        }
         /* --- Game Grid --- */
         .game-grid {
-            display: flex;
+            display: grid; /* Changed from flex to grid for better layout control */
             /* Default for large screens: 4 columns */
             grid-template-columns: repeat(4, 1fr);
             gap: 55px;
             margin-bottom: 30px;
+            padding: 20px 55px; /* Added padding to the grid container */
         }
 
         .game-card {
@@ -104,8 +105,11 @@
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
-            position: relative;
+            /* Removed position: relative as the button is no longer absolutely positioned */
             transition: transform 0.3s, box-shadow 0.3s;
+            /* Added for vertical stacking */
+            display: flex;
+            flex-direction: column;
         }
 
         .game-card:hover {
@@ -128,13 +132,16 @@
             justify-content: center;
             color: var(--secondary-color);
             font-size: 0.9rem;
-            content: "Image Missing";
+            /* The 'content' property below won't work on img tags, this is for demonstration */
+            /* content: "Image Missing"; */ 
         }
-        .game-thumbnail:before { content: "Loading Image..."; }
+        /* Using :before for content on images is generally not supported, removing the original line */
+        /* .game-thumbnail:before { content: "Loading Image..."; } */
 
 
         .card-info {
             padding: 10px;
+            flex-grow: 1; /* Allows info to take up remaining vertical space */
         }
 
         .card-info h4 {
@@ -151,36 +158,45 @@
             color: var(--accent-color);
         }
 
+        /* --- UPDATED: Play Button Styling (Underneath the picture/info) --- */
         .card-play-btn {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.7);
-            color: var(--primary-color);
-            border: 2px solid var(--primary-color);
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            transition: opacity 0.3s, color 0.3s, border-color 0.3s;
-        }
-
-        .game-card:hover .card-play-btn {
+            /* Removed absolute positioning properties */
+            
+            display: block; 
+            text-align: center;
+            text-decoration: none;
+            font-weight: bold;
+            
+            /* Sizing and positioning */
+            width: 90%;
+            margin: 10px auto 15px auto; /* Center button horizontally, add vertical margins */
+            padding: 10px 0;
+            
+            /* Theme Colors */
+            background-color: var(--primary-color); 
+            color: var(--text-light);
+            border-radius: 5px;
+            
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            transition: background-color 0.3s, transform 0.2s;
+            
+            /* Ensure it is always visible */
             opacity: 1;
         }
+        
+        /* Removed .game-card:hover .card-play-btn since it's now always visible */
 
         .card-play-btn:hover {
-            color: var(--accent-color);
-            border-color: var(--accent-color);
+            background-color: #0056b3; /* Darker shade of primary-color for hover */
+            color: var(--accent-color); 
+            transform: translateY(-1px);
         }
 
         .card-play-btn i {
-            font-size: 1.5rem;
+            font-size: 1.2rem; /* Adjusted icon size for the new button */
+            margin-right: 8px; 
         }
+        /* --- END UPDATED PLAY BUTTON --- */
 
         .section-footer {
             text-align: center;
@@ -206,6 +222,22 @@
             font-size: 0.9rem;
             color: var(--secondary-color);
         }
+        
+        /* New Back to Top Anchor Styling */
+        .main-footer a[href="#top"] {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 5px 10px;
+            background-color: #444;
+            color: #eee;
+            text-decoration: none;
+            border-radius: 3px;
+        }
+
+        .main-footer a[href="#top"]:hover {
+            background-color: #555;
+            color: var(--accent-color);
+        }
 
 
         /*
@@ -216,55 +248,23 @@
 
         /* 1. Tablet View (max-width: 992px) */
         @media (max-width: 992px) {
-            /* Adjust Header */
-            .main-header {
-                flex-wrap: wrap;
-                justify-content: center;
+            
+            header {
+                /* Reduced padding to reclaim some width */
                 padding: 10px 2%;
                 width: 96%;
-                height: auto; /* Allow height to adjust */
-            }
-
-            .logo {
-                width: 100%;
-                text-align: center;
-                margin-bottom: 10px;
-            }
-
-            .main-nav {
-                order: 2; /* Puts nav below logo/controls on wrap */
-                width: 100%;
-                justify-content: center;
-                margin-bottom: 10px;
-                gap: 15px;
-                font-size: 0.9rem;
-            }
-
-            .user-controls {
-                order: 3;
-                width: 100%;
-                justify-content: center;
-            }
-
-            .search-bar {
-                flex-grow: 1;
-                max-width: 300px;
             }
 
             body {
-                /* Adjust padding to account for the taller, wrapping header */
-                padding-top: 130px; 
+                /* Adjust padding for the fixed header */
+                padding-top: 80px; 
             }
-
-            /* Adjust Hero Feature */
-            .hero-image {
-                height: 350px;
-            }
-
+            
             /* Adjust Game Grid: Show 3 columns */
             .game-grid {
                 grid-template-columns: repeat(3, 1fr);
-                gap: 15px;
+                gap: 25px; /* Reduced gap */
+                padding: 20px;
             }
         }
 
@@ -272,135 +272,63 @@
         @media (max-width: 768px) {
             
             body {
-                padding-top: 150px; /* Slightly more padding for smaller screens */
+                padding-top: 100px; /* Slightly more padding for smaller screens */
             }
             
-            .section-title {
-                font-size: 1.5rem;
-            }
-
-            /* Adjust Hero Feature */
-            .hero-image {
-                height: 250px;
-            }
-
-            .hero-overlay {
-                padding: 15px;
-            }
-            
-            .hero-overlay h2 {
-                font-size: 1.5rem;
-            }
-            
-            .hero-overlay p {
-                font-size: 0.9rem;
-            }
-
-            .btn-hero {
-                padding: 10px 20px;
-                font-size: 1rem;
-            }
-
             /* Adjust Game Grid: Show 2 columns */
             .game-grid {
                 grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
             }
             
             .game-thumbnail {
                 height: 120px; /* Slightly smaller thumbnail height */
             }
-            
-            .card-info h4 {
-                font-size: 1rem;
-            }
         }
 
         /* 3. Mobile Portrait View (max-width: 500px) */
-        @media (max-width: 500px) 
+        @media (max-width: 500px) {
             
-            /* Header adjustments for a very small screen */
-            
-            
-            {
-            .nav-link {
-                text-align: center;
-                padding: 10px 0;
-                border-bottom: 1px solid var(--card-background);
-            }
-            
-            .user-controls {
-                flex-direction: column;
-                gap: 10px;
-                margin-top: 0;
-            }
-            
-            .search-bar {
-                width: 100%;
-                max-width: none;
-            }
-            
-            .btn-primary {
-                width: 100%; /* Make login button full width */
-                text-align: center;
-            }
-
             body {
-                /* Max adjusted padding for fixed header */
-                padding-top: 250px; 
+                padding-top: 80px; /* Max adjusted padding for fixed header */
             }
 
-
-
-
-
- /* Adjust Game Grid: Show 1 column (single stack - new side-by-side layout for better use of vertical space) */
+            /* Adjust Game Grid: Show 1 column with a standard vertical card layout */
             .game-grid {
                 grid-template-columns: 1fr;
-                gap: 10px;
+                gap: 20px;
+                padding: 10px;
             }
             
+            /* Reset game card to single column stacking */
             .game-card {
                 display: flex;
-                align-items: center;
+                flex-direction: column;
                 height: auto;
             }
             
             .game-thumbnail {
-                width: 100px; /* Smaller, fixed width for side-by-side view */
-                height: 100px;
-                flex-shrink: 0;
-                border-radius: 8px 0 0 8px; /* Correct rounding for the side */
+                width: 100%;
+                height: 150px;
+                border-radius: 8px 8px 0 0;
             }
             
             .card-info {
-                flex-grow: 1;
                 padding: 10px;
             }
 
-            /* Play button changes for 1-column layout */
-            /* Move play button to the right side and make it always visible */
+            /* Ensure the play button appears correctly on mobile */
             .card-play-btn {
-                position: static;
-                transform: none;
-                width: 35px;
-                height: 35px;
-                margin-right: 10px;
-                opacity: 1; /* Always visible in this view */
-                color: var(--accent-color);
-                border-color: var(--accent-color);
-                flex-shrink: 0;
-            }
-            
-            .card-play-btn i {
-                font-size: 1rem;
+                width: 90%;
+                margin: 0 auto 15px auto;
+                display: block; /* Keep it as a block element */
             }
             
             .game-card:hover {
                 transform: none; /* Disable hover movement on small screens */
             }
     
-
- /* Footer adjustments */
+            /* Footer adjustments */
             .footer-links {
                 display: flex;
                 flex-direction: column;
@@ -410,5 +338,4 @@
             .footer-links a {
                 margin: 5px 0;
             }
-    
-    }
+        }
