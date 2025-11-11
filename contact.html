@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -139,4 +140,147 @@
     </div>
 
 </body>
+=======
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - Gaming with Fahim</title>
+    <!-- Load Tailwind CSS from CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Set default font to Inter for a modern look */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Dark background */
+            color: #e2e8f0;
+            line-height: 1.7;
+        }
+        .policy-link {
+            color: #63b3ed; /* Light blue link color */
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .policy-link:hover {
+            color: #90cdf4;
+        }
+        /* Style for input fields */
+        .game-input {
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            color: #e2e8f0;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .game-input:focus {
+            border-color: #63b3ed;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(99, 179, 237, 0.5);
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <div class="max-w-4xl mx-auto bg-[#161b22] p-6 sm:p-10 rounded-xl shadow-2xl border border-[#30363d]">
+
+        <!-- Header -->
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-[#90cdf4] mb-2">Connect with the Dev</h1>
+            <p class="text-lg text-gray-400">We love hearing from the community.</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="space-y-10">
+
+            <!-- Section 1: Contact Form -->
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- Contact Information Card -->
+                <div class="lg:order-2 p-6 bg-[#23262d] rounded-xl shadow-xl border border-[#30363d] h-full">
+                    <h2 class="text-2xl font-bold text-white mb-4">Direct Channels</h2>
+                    <p class="text-gray-400 mb-6">The fastest way to reach out is via email for official inquiries or support requests.</p>
+
+                    <div class="space-y-4">
+                        <!-- Email -->
+                        <div class="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#63b3ed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mail"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                            <div>
+                                <p class="text-sm text-gray-400">Official Support</p>
+                                <a href="mailto:contact@gaming-with-fahim.pages.dev" class="text-yellow-400 font-semibold hover:text-yellow-300 transition-colors">contact@gaming-with-fahim.pages.dev</a>
+                            </div>
+                        </div>
+                        
+                        <!-- Social Media (Placeholder) -->
+                        <div class="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#63b3ed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-twitter"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17-15.3 11.8A1.9 1.9 0 0 1 8 16c-.7-2.1-.2-4.1.7-5.5a4.1 4.1 0 0 0-.1-2.9c-2.9 2.9-4.3 7.5-4.3 7.5s.1.6 0 1.5c.3.7.8 1.4 1.5 2.1C8 19 12 18.5 16 17.5c1.4-.4 2.6-1.3 3.5-2.5c1-1.3 1.5-2.7 1.5-4.5c0-1.2-.2-2.3-.6-3.3l.5-.3s-.4.6-.9 1.4c1.1-.3 2.1-.7 2.9-1.3z"/></svg>
+                            <div>
+                                <p class="text-sm text-gray-400">Follow the Journey</p>
+                                <a href="#" class="text-[#90cdf4] font-semibold hover:text-[#b0d9f7] transition-colors">@GamingWithFahim</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-xl font-semibold text-white mt-8 mb-3">What to Contact Us About</h3>
+                    <ul class="list-disc list-inside ml-4 space-y-2 text-gray-400">
+                        <li>Game Feedback & Ideas</li>
+                        <li>Reporting Bugs or Errors</li>
+                        <li>Business Inquiries / Collaborations</li>
+                        <li>Data and Privacy Questions</li>
+                    </ul>
+                </div>
+
+                <!-- Contact Form -->
+                <div class="lg:order-1">
+                    <h2 class="text-2xl font-bold text-white mb-4">Send a Message</h2>
+                    <form action="#" method="POST" class="space-y-4">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-300 mb-1">Your Name</label>
+                            <input type="text" id="name" name="name" placeholder="Enter your name" required class="w-full game-input">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-300 mb-1">Your Email</label>
+                            <input type="email" id="email" name="email" placeholder="email@example.com" required class="w-full game-input">
+                        </div>
+                        <div>
+                            <label for="subject" class="block text-sm font-medium text-gray-300 mb-1">Subject</label>
+                            <input type="text" id="subject" name="subject" placeholder="Bug Report, Feedback, etc." required class="w-full game-input">
+                        </div>
+                        <div>
+                            <label for="message" class="block text-sm font-medium text-gray-300 mb-1">Message</label>
+                            <textarea id="message" name="message" rows="5" placeholder="Type your detailed message here..." required class="w-full game-input resize-none"></textarea>
+                        </div>
+                        <div class="pt-2">
+                            <button type="submit" class="w-full px-8 py-3 bg-[#63b3ed] text-black font-bold rounded-lg transition duration-300 hover:bg-[#90cdf4] transform hover:scale-[1.01] shadow-lg">
+                                Send Message (via Email)
+                            </button>
+                            <p class="text-xs text-gray-500 mt-2 text-center">Note: This is a visual form; real submission will redirect you to your email client.</p>
+                        </div>
+                    </form>
+                </div>
+
+            </section>
+
+        </main>
+
+        <!-- Footer / Navigation -->
+        <footer class="mt-12 pt-6 border-t border-gray-700 text-center text-sm text-gray-500">
+            <p>&copy; 2025 Gaming with Fahim. All rights reserved.</p>
+            <p class="mt-2 space-x-4">
+                <a href="/" class="policy-link">Return to Homepage</a>
+                <span class="text-gray-600">|</span>
+                <a href="about-us.html" class="policy-link">About Us</a>
+                <span class="text-gray-600">|</span>
+                <a href="privacypolicy.html" class="policy-link">Privacy Policy</a>
+                <span class="text-gray-600">|</span>
+                <a href="terms-conditions.html" class="policy-link">Terms & Conditions</a>
+            </p>
+        </footer>
+
+    </div>
+
+</body>
+>>>>>>> 93fa6b8e078739b6c28a5aaba8cb8adba69145f5
 </html>

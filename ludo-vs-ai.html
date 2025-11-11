@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -683,4 +684,691 @@
         }
     </script>
 </body>
+=======
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="canonical" href="https://gaming-with-fahim.pages.dev/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--GA4-->
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MC9MB92PM9"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-MC9MB92PM9');
+</script>
+
+    <title>2-Person Ludo Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'red-ludo': '#D9534F',
+                        'blue-ludo': '#428BCA',
+                        'green-ludo': '#5CB85C', /* New color */
+                        'yellow-ludo': '#F0AD4E', /* New color */
+                        'path-light': '#EEE',
+                        'board-bg': '#383838',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Base Configuration */
+        :root {
+            --red: #D9534F;
+            --blue: #428BCA;
+            --green: #5CB85C; /* New color */
+            --yellow: #F0AD4E; /* New color */
+            --path-light: #EEE;
+            --square-size: 40px; /* Defines one unit square size */
+            --board-padding: 20px;
+        }
+
+        /* Ludo Board Grid */
+        #ludo-board {
+            display: grid;
+            /* 15 Columns: 6 large home, 3 path, 6 large home */
+            grid-template-columns: repeat(15, var(--square-size));
+            /* 15 Rows: 6 large home, 3 path, 6 large home */
+            grid-template-rows: repeat(15, var(--square-size));
+            border: 5px solid #000;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+            position: relative;
+            background-color: var(--path-light);
+        }
+
+        /* Base Square Styling */
+        .square {
+            width: var(--square-size);
+            height: var(--square-size);
+            border: 1px solid #AAA;
+            box-sizing: border-box;
+            background-color: var(--path-light);
+            position: relative; 
+        }
+
+        /* Home Base Areas (Top-Left and Bottom-Right 6x6 blocks) */
+        .home-base {
+            background-color: white;
+            border: none;
+        }
+        
+        /* Specific Safe Zones/Starts */
+        .start-red { background-color: var(--red) !important; }
+        .start-blue { background-color: var(--blue) !important; }
+        .safe-star { 
+            background-color: #d8d810 !important; /* Yellow */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        /* Center Finish (Styled for 4-way color) */
+        #center-finish {
+            grid-area: 7 / 7 / span 3 / span 3; /* R7, C7, spanning 3x3 */
+            border: 5px solid white;
+            background: 
+                /* Top Left (Red) */
+                linear-gradient(to bottom right, var(--red) 50%, transparent 50%) top left / 50% 50% no-repeat,
+                /* Top Right (Green Visual) */
+                linear-gradient(to bottom left, var(--green) 50%, transparent 50%) top right / 50% 50% no-repeat,
+                /* Bottom Left (Yellow Visual) */
+                linear-gradient(to top right, var(--yellow) 50%, transparent 50%) bottom left / 50% 50% no-repeat,
+                /* Bottom Right (Blue) */
+                linear-gradient(to top left, var(--blue) 50%, transparent 50%) bottom right / 50% 50% no-repeat;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #333; /* Dark color for contrast on light center */
+            text-shadow: 1px 1px 2px #fff;
+            z-index: 2;
+        }
+
+        /* Token Styling */
+        .token {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid #333;
+            cursor: pointer;
+            z-index: 10;
+            transition: transform 0.3s ease-out; /* Smooth movement */
+            position: absolute; 
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+        }
+
+        .red-token { background-color: var(--red); }
+        .blue-token { background-color: var(--blue); }
+
+        /* Layout for the 6x6 Home Boxes to hold initial tokens */
+        .home-base-box {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            place-items: center;
+            width: calc(6 * var(--square-size));
+            height: calc(6 * var(--square-size));
+            padding: 15px;
+            box-sizing: border-box;
+            position: absolute;
+            z-index: 1;
+            border: 1px solid #000;
+        }
+        
+        /* Red (AI) - Top Left */
+        #home-red {
+            grid-area: 1 / 1 / span 6 / span 6;
+            background-color: rgba(217, 83, 79, 0.2);
+            left: 0; top: 0;
+            border-color: var(--red);
+        }
+        
+        /* Blue (Player) - Bottom Right */
+        #home-blue {
+            grid-area: 10 / 10 / span 6 / span 6;
+            background-color: rgba(66, 139, 202, 0.2);
+            left: calc(9 * var(--square-size)); top: calc(9 * var(--square-size));
+            border-color: var(--blue);
+        }
+
+        /* Green (Visual) - Top Right */
+        #home-green-visual {
+            grid-area: 1 / 10 / span 6 / span 6;
+            background-color: rgba(92, 184, 92, 0.2);
+            left: calc(9 * var(--square-size)); top: 0;
+            border-color: var(--green);
+        }
+
+        /* Yellow (Visual) - Bottom Left */
+        #home-yellow-visual {
+            grid-area: 10 / 1 / span 6 / span 6;
+            background-color: rgba(240, 173, 78, 0.2);
+            left: 0; top: calc(9 * var(--square-size));
+            border-color: var(--yellow);
+        }
+
+        /* Specific Token Positioning inside Home Base */
+        #home-red .token, #home-blue .token { 
+            position: static !important; 
+            margin: 0 !important; 
+            transform: none !important; 
+        }
+
+        .active-token {
+            border-color: yellow;
+            box-shadow: 0 0 10px yellow;
+        }
+
+        .ai-turn-indicator {
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4 font-sans">
+
+    <h1 class="text-4xl font-bold mb-6 text-gray-800">Ludo AI vs. Player</h1>
+
+    <div id="game-container" class="flex flex-col lg:flex-row items-start lg:items-center p-6 bg-board-bg rounded-xl shadow-2xl">
+        
+        <div id="ludo-board">
+            <div id="home-red" class="home-base-box">
+                <h2 class="col-span-2 text-xl text-red-ludo font-bold">AI (RED)</h2>
+                <div class="token red-token" id="red-t1" data-pos="0"></div>
+                <div class="token red-token" id="red-t2" data-pos="0"></div>
+                <div class="token red-token" id="red-t3" data-pos="0"></div>
+                <div class="token red-token" id="red-t4" data-pos="0"></div>
+            </div>
+            
+            <div id="home-green-visual" class="home-base-box"></div>
+
+            <div id="home-yellow-visual" class="home-base-box"></div>
+
+            <div id="home-blue" class="home-base-box">
+                <h2 class="col-span-2 text-xl text-blue-ludo font-bold">YOU (BLUE)</h2>
+                <div class="token blue-token" id="blue-t1" data-pos="0"></div>
+                <div class="token blue-token" id="blue-t2" data-pos="0"></div>
+                <div class="token blue-token" id="blue-t3" data-pos="0"></div>
+                <div class="token blue-token" id="blue-t4" data-pos="0"></div>
+            </div>
+        </div>
+
+        <div id="controls" class="w-full lg:w-64 lg:ml-8 mt-6 lg:mt-0 p-4 bg-white rounded-lg shadow-lg">
+            <p id="current-player-display" class="text-xl font-semibold mb-3">Current Turn: <span class="text-red-ludo">Red</span></p>
+            
+            <button id="roll-button" class="w-full py-3 text-white font-bold rounded-xl transition shadow-md bg-green-600 hover:bg-green-700 active:shadow-none mb-4">
+                Roll Dice
+            </button>
+            
+            <p id="dice-result" class="text-3xl font-extrabold text-center mb-4">
+                Dice: <span id="dice-value">-</span>
+            </p>
+
+            <div class="bg-blue-100 p-3 rounded-lg">
+                <p id="message" class="text-sm text-blue-800 font-medium text-center">
+                    Roll the dice to begin!
+                </p>
+            </div>
+            
+            <div id="game-info" class="mt-4 text-xs text-gray-500">
+                <p>You are Blue (Bottom Right). Red is the AI (Top Left).</p>
+                <p>AI moves automatically when it's Red's turn.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Game Configuration & State ---
+        const BOARD_SIZE = 15;
+        const SQUARE_SIZE = 40; 
+        const AI_PLAYER = 'red';
+        const AI_DELAY_MS = 1000;
+        
+        let currentPlayer = 'red';
+        let diceValue = 0;
+        let isMoving = false;
+        
+        // 0 = Home Base, 1-52 = Board Path, 101-106 = Red Home Column, 201-206 = Blue Home Column, 200 = Finished.
+        let tokenPositions = {
+            'red-t1': 0, 'red-t2': 0, 'red-t3': 0, 'red-t4': 0,
+            'blue-t1': 0, 'blue-t2': 0, 'blue-t3': 0, 'blue-t4': 0,
+        };
+
+        const START_POSITIONS = { 'red': 1, 'blue': 27 };
+        const HOME_ENTRY_POSITIONS = { 'red': 52, 'blue': 26 };
+
+        // Safe Positions: The two start positions (1, 27) and the four starred squares.
+        const SAFE_POSITIONS = [1, 9, 14, 22, 27, 35, 40, 48];
+        
+        // --- DOM Elements ---
+        const ludoBoard = document.getElementById('ludo-board');
+        const rollButton = document.getElementById('roll-button');
+        const diceValueDisplay = document.getElementById('dice-value');
+        const currentPlayerDisplay = document.getElementById('current-player-display').querySelector('span');
+        const messageDisplay = document.getElementById('message');
+        const tokens = document.querySelectorAll('.token');
+        const homeRedContainer = document.getElementById('home-red');
+        const homeBlueContainer = document.getElementById('home-blue');
+
+
+        // --- Ludo Path Mapping (r, c) - KEPT THE SAME FOR LOGIC ---
+        const PATH_MAP = {
+            1: { r: 7, c: 2 }, 2: { r: 7, c: 3 }, 3: { r: 7, c: 4 }, 4: { r: 7, c: 5 }, 5: { r: 7, c: 6 },
+            6: { r: 6, c: 7 }, 7: { r: 5, c: 7 }, 8: { r: 4, c: 7 }, 9: { r: 3, c: 7 }, 10: { r: 2, c: 7 },
+            11: { r: 1, c: 7 }, 12: { r: 1, c: 8 }, 13: { r: 1, c: 9 },
+            14: { r: 2, c: 9 }, 15: { r: 3, c: 9 }, 16: { r: 4, c: 9 }, 17: { r: 5, c: 9 }, 18: { r: 6, c: 9 },
+            19: { r: 7, c: 10 }, 20: { r: 7, c: 11 }, 21: { r: 7, c: 12 }, 22: { r: 7, c: 13 }, 23: { r: 7, c: 14 },
+            24: { r: 7, c: 15 }, 25: { r: 8, c: 15 }, 26: { r: 9, c: 15 }, 
+            27: { r: 9, c: 14 }, 28: { r: 9, c: 13 }, 29: { r: 9, c: 12 }, 30: { r: 9, c: 11 }, 31: { r: 9, c: 10 },
+            32: { r: 10, c: 9 }, 33: { r: 11, c: 9 }, 34: { r: 12, c: 9 }, 35: { r: 13, c: 9 }, 36: { r: 14, c: 9 },
+            37: { r: 15, c: 9 }, 38: { r: 15, c: 8 }, 39: { r: 15, c: 7 },
+            40: { r: 14, c: 7 }, 41: { r: 13, c: 7 }, 42: { r: 12, c: 7 }, 43: { r: 11, c: 7 }, 44: { r: 10, c: 7 },
+            45: { r: 9, c: 6 }, 46: { r: 9, c: 5 }, 47: { r: 9, c: 4 }, 48: { r: 9, c: 3 }, 49: { r: 9, c: 2 },
+            50: { r: 9, c: 1 }, 51: { r: 8, c: 1 }, 52: { r: 7, c: 1 }, 
+
+            101: { r: 8, c: 2 }, 102: { r: 8, c: 3 }, 103: { r: 8, c: 4 }, 104: { r: 8, c: 5 }, 105: { r: 8, c: 6 }, 106: { r: 8, c: 7 },
+            201: { r: 14, c: 8 }, 202: { r: 13, c: 8 }, 203: { r: 12, c: 8 }, 204: { r: 11, c: 8 }, 205: { r: 10, c: 8 }, 206: { r: 9, c: 8 },
+        };
+
+
+        // --- Helper & Utility Functions ---
+
+        function getVisualCoordinates(position) {
+            if (position <= 0 || position === 200) return null;
+            const map = PATH_MAP[position];
+            if (!map) return null;
+            const x = (map.c - 1) * SQUARE_SIZE;
+            const y = (map.r - 1) * SQUARE_SIZE;
+            const offset = (SQUARE_SIZE - 30) / 2;
+            return { x: x + offset, y: y + offset };
+        }
+
+        function resetTokenToHome(tokenId) {
+            tokenPositions[tokenId] = 0;
+            updateTokenPosition(tokenId, 0);
+        }
+
+        // Visually moves the token
+        function updateTokenPosition(tokenId, newPosition) {
+            const tokenElement = document.getElementById(tokenId);
+            tokenElement.setAttribute('data-pos', newPosition);
+            
+            const homeContainer = tokenId.startsWith('red') ? homeRedContainer : homeBlueContainer;
+
+            if (newPosition === 0) {
+                // Move back to Home Base (Static/Grid Layout)
+                tokenElement.style.position = 'static';
+                tokenElement.style.transform = 'none';
+                homeContainer.appendChild(tokenElement); 
+                tokenElement.style.display = 'block';
+            } else if (newPosition === 200) {
+                // Finished
+                tokenElement.style.display = 'none'; 
+            } else {
+                // Move to Main Path (Absolute Positioning)
+                const coords = getVisualCoordinates(newPosition);
+                tokenElement.style.position = 'absolute';
+                tokenElement.style.transform = `translate(${coords.x}px, ${coords.y}px)`;
+                tokenElement.style.display = 'block';
+
+                // FIX: Ensure the token is a child of the main board for absolute positioning
+                if (tokenElement.parentElement !== ludoBoard) {
+                    ludoBoard.appendChild(tokenElement);
+                }
+            }
+        }
+
+        // Calculates the final position of a move without modifying state
+        function calculateFinalPos(currentPos, steps, playerColor) {
+            if (currentPos === 0) {
+                return (steps === 6) ? START_POSITIONS[playerColor] : null;
+            }
+
+            // 1. Movement in Home Column (101-106 or 201-206)
+            if (currentPos > 52) {
+                const homeBase = (playerColor === 'red') ? 100 : 200;
+                const maxPos = homeBase + 6;
+                const nextPos = currentPos + steps;
+                
+                if (nextPos === maxPos + 1) return 200; // Finish!
+                if (nextPos > maxPos) return null;      // Over-roll
+                return nextPos;
+            }
+
+            // 2. Main Path Movement (1-52) - Use step-by-step logic for Home Entry
+            const totalSteps = steps;
+            let finalPos = currentPos;
+            
+            for (let i = 0; i < totalSteps; i++) {
+                finalPos++;
+
+                // Handle Path Wrap (52 wraps to 1)
+                if (finalPos > 52) {
+                    finalPos = 1;
+                }
+
+                // Handle Home Entry Check (Red: 52, Blue: 26)
+                if (playerColor === 'red' && finalPos === HOME_ENTRY_POSITIONS['red']) {
+                    const stepsRemaining = totalSteps - (i + 1); // steps after landing on 52
+                    
+                    if (stepsRemaining === 0) return 101; // Lands exactly on 52/101 entry
+                    if (stepsRemaining === 6) return 200; // Lands exactly on Finish
+                    if (stepsRemaining > 0 && stepsRemaining < 6) return 100 + stepsRemaining + 1; // Moves into home column (102-106)
+                    return null; // Over-roll
+                } 
+                
+                if (playerColor === 'blue' && finalPos === HOME_ENTRY_POSITIONS['blue']) {
+                    const stepsRemaining = totalSteps - (i + 1); // steps after landing on 26
+                    
+                    if (stepsRemaining === 0) return 201; // Lands exactly on 26/201 entry
+                    if (stepsRemaining === 6) return 200; // Lands exactly on Finish
+                    if (stepsRemaining > 0 && stepsRemaining < 6) return 200 + stepsRemaining + 1; // Moves into home column (202-206)
+                    return null; // Over-roll
+                } 
+            }
+
+            // If no home entry was hit, return the final path position
+            return finalPos;
+        }
+
+        // Checks for a kick at the potential new position
+        function checkForKick(newPos, movingTokenId, isLookahead = false) {
+            const movingPlayer = movingTokenId.split('-')[0];
+            
+            if (SAFE_POSITIONS.includes(newPos) || newPos > 52) {
+                return null; 
+            }
+
+            for (const tokenId in tokenPositions) {
+                // Check only opponent tokens on the main path
+                if (tokenId.startsWith(movingPlayer) || tokenPositions[tokenId] === 0 || tokenPositions[tokenId] > 52) continue;
+                
+                if (tokenPositions[tokenId] === newPos) {
+                    if (!isLookahead) {
+                        resetTokenToHome(tokenId);
+                        messageDisplay.textContent += ` 💥 KICKED ${tokenId.toUpperCase()}!`; // FIX: Replaced non-standard char
+                    }
+                    return tokenId;
+                }
+            }
+            return null;
+        }
+
+        // Executes the actual move after validation/decision
+        function handleTokenMove(tokenId, steps) {
+            const currentPos = tokenPositions[tokenId];
+            const playerColor = tokenId.split('-')[0];
+            
+            const finalPos = calculateFinalPos(currentPos, steps, playerColor);
+
+            if (finalPos === null) {
+                return false; // Invalid move
+            }
+            
+            // Execute move
+            tokenPositions[tokenId] = finalPos;
+            updateTokenPosition(tokenId, finalPos);
+            
+            messageDisplay.textContent = `${tokenId.toUpperCase()} moved to position ${finalPos > 52 ? 'Home Column' : finalPos}.`;
+            
+            // Check for kick (only if on main path)
+            if (finalPos >= 1 && finalPos <= 52) {
+                checkForKick(finalPos, tokenId, false); 
+            }
+
+            // Check Win Condition
+            if (finalPos === 200) {
+                checkForWin();
+            }
+            
+            return true;
+        }
+
+        // Checks if the current player has won
+        function checkForWin() {
+            const playerTokens = Object.keys(tokenPositions).filter(id => id.startsWith(currentPlayer));
+            const finishedCount = playerTokens.filter(id => tokenPositions[id] === 200).length;
+
+            if (finishedCount === 4) {
+                rollButton.disabled = true;
+                isMoving = false;
+                currentPlayerDisplay.classList.remove('ai-turn-indicator');
+                messageDisplay.classList.remove('bg-blue-100', 'text-blue-800');
+                messageDisplay.classList.add('bg-yellow-300', 'text-black');
+                messageDisplay.textContent = `👑 GAME OVER! ${currentPlayer.toUpperCase()} WINS! 👑`; // FIX: Replaced non-standard char
+                return true;
+            }
+            return false;
+        }
+
+        // --- Turn Management ---
+
+        function switchTurn() {
+            diceValue = 0;
+            isMoving = false;
+            currentPlayer = (currentPlayer === 'red') ? 'blue' : 'red';
+            updateCurrentPlayerDisplay();
+            
+            if (!checkForWin()) {
+                if (currentPlayer === AI_PLAYER) {
+                    rollButton.disabled = true;
+                    setTimeout(aiTurn, AI_DELAY_MS);
+                } else {
+                    rollButton.disabled = false;
+                }
+            }
+        }
+
+        function rollDice() {
+            if (isMoving && currentPlayer !== AI_PLAYER) return;
+            rollButton.disabled = true;
+            diceValue = Math.floor(Math.random() * 6) + 1;
+            diceValueDisplay.textContent = diceValue;
+            
+            isMoving = true;
+            
+            if (currentPlayer === AI_PLAYER) {
+                messageDisplay.textContent = `AI (RED) rolled a ${diceValue}. Deciding move...`;
+                setTimeout(() => aiMoveDecision(diceValue), AI_DELAY_MS);
+            } else {
+                messageDisplay.textContent = `YOU (BLUE) rolled a ${diceValue}. Click a token to move.`;
+                tokens.forEach(t => {
+                    if (t.id.startsWith(currentPlayer) && calculateFinalPos(tokenPositions[t.id], diceValue, currentPlayer)) {
+                        t.classList.add('active-token');
+                    }
+                });
+
+                // Check for no valid moves for human player
+                const blueTokens = Array.from(tokens).filter(t => t.id.startsWith('blue'));
+                const canMove = blueTokens.some(t => calculateFinalPos(tokenPositions[t.id], diceValue, 'blue'));
+
+                if (!canMove) {
+                    messageDisplay.textContent = `YOU (BLUE) have no valid moves for a ${diceValue}. Passing turn.`;
+                    setTimeout(switchTurn, AI_DELAY_MS * 1.5);
+                }
+            }
+        }
+
+        // --- AI Logic ---
+
+        function aiMoveDecision(steps) {
+            const redTokens = Object.keys(tokenPositions).filter(id => id.startsWith(AI_PLAYER));
+            let validMoves = [];
+
+            for (const tokenId of redTokens) {
+                const currentPos = tokenPositions[tokenId];
+                const finalPos = calculateFinalPos(currentPos, steps, AI_PLAYER);
+
+                if (finalPos === null) continue;
+
+                let priority = 0;
+                let isKicking = false;
+
+                // Priority 1: Moving out of Home on a 6
+                if (currentPos === 0 && steps === 6) {
+                    priority = 10;
+                } 
+                // Priority 2: Finish
+                else if (finalPos === 200) {
+                    priority = 15;
+                } 
+                // Priority 3: Kicking
+                else if (finalPos >= 1 && finalPos <= 52) {
+                    isKicking = checkForKick(finalPos, tokenId, true);
+                    if (isKicking) {
+                        priority = 12;
+                    }
+                } 
+                
+                // Priority 4: Advancing towards home entry (weighted by current position)
+                else {
+                    // Normalize position for advancement priority
+                    // Home Column moves (100s) get high priority
+                    // Path moves (1-52) are weighted by distance
+                    priority = (finalPos > 100) ? 9 : (5 + (finalPos / 52) * 4);
+                }
+
+                validMoves.push({ tokenId, finalPos, priority, isKicking });
+            }
+
+            if (validMoves.length > 0) {
+                // Execute the highest priority move
+                validMoves.sort((a, b) => b.priority - a.priority);
+                const bestMove = validMoves[0];
+                
+                handleTokenMove(bestMove.tokenId, steps);
+                
+                // If AI rolled a 6, re-roll immediately (after a slight delay for visual)
+                if (steps === 6 && !checkForWin()) {
+                    setTimeout(aiTurn, AI_DELAY_MS);
+                } else {
+                    setTimeout(switchTurn, AI_DELAY_MS);
+                }
+            } else {
+                messageDisplay.textContent = `AI (RED) has no valid moves for a ${diceValue}. Passing turn.`;
+                setTimeout(switchTurn, AI_DELAY_MS);
+            }
+        }
+
+        function aiTurn() {
+            if (currentPlayer !== AI_PLAYER) return;
+            rollDice(); // This calls aiMoveDecision internally
+        }
+
+        // --- Initialization ---
+        function updateCurrentPlayerDisplay() {
+            const isAI = currentPlayer === AI_PLAYER;
+            currentPlayerDisplay.textContent = isAI ? 'AI (RED)' : 'YOU (BLUE)';
+            currentPlayerDisplay.className = isAI ? 'text-red-ludo ai-turn-indicator' : 'text-blue-ludo';
+            rollButton.classList.toggle('hidden', isAI);
+        }
+
+        function createBoard() {
+            for (let r = 1; r <= BOARD_SIZE; r++) {
+                for (let c = 1; c <= BOARD_SIZE; c++) {
+                    const square = document.createElement('div');
+                    square.classList.add('square');
+                    square.id = `r${r}c${c}`;
+
+                    // Determine if the square is inside a 6x6 home area or the center 3x3 finish area
+                    const isHomeArea = (r <= 6 && c <= 6) || (r >= 10 && c >= 10) || (r <= 6 && c >= 10) || (r >= 10 && c <= 6) || (r >= 7 && r <= 9 && c >= 7 && c <= 9);
+                    if (isHomeArea) square.classList.add('home-base');
+                    
+                    // --- Safe Zones/Starts ---
+                    
+                    // All 4 start/home entry squares (Path Pos 1, 14, 27, 40)
+                    if ((r === 7 && c === 2) || (r === 2 && c === 9) || (r === 9 && c === 14) || (r === 14 && c === 7)) {
+                        square.classList.add('safe-star'); square.textContent = '🏠'; // FIX: Replaced non-standard char
+                    }
+                    // All 4 starred safe squares (Path Pos 9, 22, 35, 48)
+                    else if ((r === 3 && c === 7) || (r === 7 && c === 13) || (r === 13 && c === 9) || (r === 9 && c === 3)) {
+                        square.classList.add('safe-star'); square.textContent = '⭐'; // FIX: Replaced non-standard char
+                    }
+                    
+                    // --- Coloring Home Columns (Standard Ludo Layout) ---
+                    // Red Home Column (R8, C2-C7)
+                    if (r === 8 && c >= 2 && c <= 7) square.style.backgroundColor = 'var(--red)';
+                    // Green Home Column (R2-R7, C8) - Top Right Player's Home Path (Visual only)
+                    if (c === 8 && r >= 2 && r <= 7) square.style.backgroundColor = 'var(--green)';
+                    // Yellow Home Column (R9, C14-C10) - Bottom Left Player's Home Path (Visual only)
+                    if (r === 9 && c >= 10 && c <= 14) square.style.backgroundColor = 'var(--yellow)';
+                    // Blue Home Column (R14-R9, C8) - Bottom Right Player's Home Path (Actual player path)
+                    if (c === 8 && r >= 9 && r <= 14) square.style.backgroundColor = 'var(--blue)';
+
+                    ludoBoard.appendChild(square);
+                }
+            }
+            
+            // Re-apply specific start color classes after general coloring (and path colors)
+            document.getElementById('r7c2').style.backgroundColor = 'var(--red)';   // Red Start (Pos 1)
+            document.getElementById('r2c9').style.backgroundColor = 'var(--green)'; // Green Start (Pos 14)
+            document.getElementById('r9c14').style.backgroundColor = 'var(--blue)';  // Blue Start (Pos 27)
+            document.getElementById('r14c7').style.backgroundColor = 'var(--yellow)'; // Yellow Start (Pos 40)
+
+            const centerFinish = document.createElement('div');
+            centerFinish.id = 'center-finish';
+            centerFinish.textContent = 'FINISH';
+            ludoBoard.appendChild(centerFinish);
+        }
+
+        // Setup event listeners and run initial AI turn if starting player is Red
+        rollButton.addEventListener('click', rollDice);
+
+        tokens.forEach(token => {
+            token.addEventListener('click', (e) => {
+                if (currentPlayer === 'blue' && isMoving) {
+                    // Remove highlights from all tokens
+                    tokens.forEach(t => t.classList.remove('active-token'));
+                    if (handleTokenMove(e.target.id, diceValue)) {
+                        // Move succeeded
+                        if (diceValue !== 6 && !checkForWin()) {
+                            setTimeout(switchTurn, 500);
+                        } else if (diceValue === 6 && !checkForWin()) {
+                            rollButton.disabled = false;
+                            isMoving = false;
+                            messageDisplay.textContent += ` Roll again!`;
+                        }
+                    } else {
+                        // Move failed (e.g., trying to move a token that cannot move)
+                        e.target.classList.add('active-token'); // Re-highlight the original token
+                        messageDisplay.textContent = `Invalid move for this token. Select another blue token.`;
+                    }
+                }
+            });
+        });
+
+        createBoard();
+        
+        // FIX: Ensure all tokens start in their home containers correctly before updating display
+        Object.keys(tokenPositions).forEach(tokenId => {
+            updateTokenPosition(tokenId, tokenPositions[tokenId]);
+        });
+        
+        updateCurrentPlayerDisplay();
+        
+        // Start the game with an immediate AI turn (if red starts)
+        if (currentPlayer === AI_PLAYER) {
+            aiTurn();
+        }
+    </script>
+</body>
+>>>>>>> 93fa6b8e078739b6c28a5aaba8cb8adba69145f5
 </html>
