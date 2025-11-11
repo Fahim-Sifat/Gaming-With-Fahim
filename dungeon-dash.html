@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dungeon Dash (CSS Map)</title>
+    <style>
+        body {
+    background-color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    font-family: sans-serif;
+    color: white;
+}
+
+#game-container {
+    text-align: center;
+    padding: 20px;
+    border: 2px solid #aaa;
+    border-radius: 10px;
+    background-color: #222;
+}
+
+#dungeon-grid {
+    display: grid;
+    /* Creates a 5x5 grid */
+    grid-template-columns: repeat(5, 50px);
+    grid-template-rows: repeat(5, 50px);
+    gap: 2px;
+    border: 3px solid #000;
+    margin: 20px auto;
+}
+
+.cell {
+    /* Base cell styling */
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 2px;
+}
+
+/* --- Environment Styles --- */
+
+.wall {
+    background-color: #444; /* Dark grey for walls */
+}
+
+.floor {
+    background-color: #8b4513; /* Brown for floor */
+}
+
+/* --- Entity Styles --- */
+
+/* The player is an element on a floor tile */
+.player {
+    background-color: #8b4513; /* Same as floor */
+    position: relative; /* Needed for the pseudo-element */
+}
+
+.player::after {
+    content: '';
+    display: block;
+    width: 70%;
+    height: 70%;
+    border-radius: 50%;
+    background-color: limegreen; /* Player color */
+    border: 1px solid #000;
+}
+
+.monster {
+    background-color: #8b4513; /* Same as floor */
+    position: relative;
+}
+
+.monster::after {
+    content: '';
+    display: block;
+    width: 60%;
+    height: 60%;
+    background-color: red; /* Monster color */
+    clip-path: polygon(50% 0%, 100% 100%, 0% 100%); /* Simple triangle/cone shape */
+}
+
+.treasure {
+    background-color: #8b4513; /* Same as floor */
+    position: relative;
+}
+
+.treasure::after {
+    content: 'T'; /* Simple Text for Treasure */
+    color: gold;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.exit {
+    background-color: #8b4513; /* Same as floor */
+    position: relative;
+}
+
+.exit::after {
+    content: '';
+    display: block;
+    width: 80%;
+    height: 20%;
+    background-color: royalblue; /* Exit/Doorway color */
+    border-radius: 5px;
+}
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Dungeon Dash Map</h1>
+        <div id="dungeon-grid">
+            <div class="cell wall"></div>
+            <div class="cell floor"></div>
+            <div class="cell floor"></div>
+            <div class="cell floor"></div>
+            <div class="cell wall"></div>
+
+            <div class="cell floor"></div>
+            <div class="cell floor player"></div>
+            <div class="cell floor"></div>
+            <div class="cell floor monster"></div>
+            <div class="cell floor"></div>
+
+            <div class="cell wall"></div>
+            <div class="cell floor"></div>
+            <div class="cell wall"></div>
+            <div class="cell floor"></div>
+            <div class="cell wall"></div>
+
+            <div class="cell floor"></div>
+            <div class="cell floor treasure"></div>
+            <div class="cell floor"></div>
+            <div class="cell floor"></div>
+            <div class="cell floor"></div>
+
+            <div class="cell floor"></div>
+            <div class="cell floor"></div>
+            <div class="cell floor exit"></div>
+            <div class="cell floor"></div>
+            <div class="cell floor"></div>
+        </div>
+        <p>You are the **green dot** (Player). Find the **blue dot** (Exit)!</p>
+    </div>
+    
+</body>
+</html>

@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Blaster</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bubble-radius: 20px;
+            --game-width: 600px;
+            --game-height: 700px;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1e293b; /* Slate-800 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        #gameCanvas {
+            border: 6px solid #4ade80; /* Emerald-400 */
+            background-color: #2b3952; /* Dark blue/slate background for game area */
+            box-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+            cursor: crosshair;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            width: var(--game-width);
+            height: var(--game-height);
+            max-width: 95vw; /* Responsive width */
+            max-height: calc(100vh - 150px); /* Responsive height */
+        }
+        .ui-box {
+            background: #111827; /* Gray-900 */
+            border-radius: 8px;
+            padding: 10px 20px;
+            border: 1px solid #475569; /* Slate-600 */
+            min-width: 150px;
+            text-align: center;
+        }
+        .game-title {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Custom styles for bubble drawing (used by JS) */
+        .color-red { fill: #ef4444; stroke: #b91c1c; }
+        .color-blue { fill: #3b82f6; stroke: #1d4ed8; }
+        .color-green { fill: #22c55e; stroke: #15803d; }
+        .color-yellow { fill: #facc15; stroke: #eab308; }
+        .color-purple { fill: #a855f7; stroke: #7e22ce; }
+        .color-white { fill: #ffffff; stroke: #e5e7eb; }
+    </style>
+</head>
+<body class="selection:bg-emerald-400 selection:text-slate-900">
+    <div class="text-center mb-6">
+        <h1 class="game-title text-4xl font-extrabold text-white mb-4">Bubble Blaster</h1>
+        
+        <!-- Updated UI Box: Lives is now "Moves" and set to Unlimited -->
+        <div class="flex flex-wrap justify-center gap-4 text-white font-semibold mb-4">
+            <div id="scoreDisplay" class="ui-box text-emerald-400">Score: 0</div>
+            <div id="movesDisplay" class="ui-box text-red-400">Moves: Unlimited</div>
+            <div id="highScoreDisplay" class="ui-box text-yellow-400">High Score: 0</div>
+        </div>
+        
+        <!-- New Restart Button -->
+        <button id="restartButton" class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-xl transition duration-150 ease-in-out tracking-wider">RESTART GAME</button>
+    </div>
+    
+    <canvas id="gameCanvas" width="600" height="700"></canvas>
+    
+    <div class="text-white text-sm mt-4 text-center max-w-lg">
+        Click anywhere on the canvas above the shooter to fire! Match 3 or more of the same color to pop them.
+    </div>
+<script type="module">
+    // --- Firebase/Firestore Imports ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Set Debug logging for Firestore
+    setLogLevel('Debug');
+
+    // Global Constants
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const BUBBLE_RADIUS = 20;
+    const BUBBLE_DIAMETER = BUBBLE_RADIUS * 2;
+    // Calculated height for hexagonal packing: sqrt(3) * R
+    const BUBBLE_GAP = Math.sqrt(3) * BUBBLE_RADIUS; 
+    const COLUMNS = 11;
+    const COLORS = ['red', 'blue', 'green', 'yellow', 'purple'];
+    const SHOOT_SPEED = 12; 
+
+    // Game State
+    let grid = []; 
+    let currentBubble = null; 
+    let flyingBubble = null; 
+    let score = 0;
+    let movesLeft = 50; // MODIFIED: Initial moves set to 50
+    let isGameOver = false; 
+
+    // UI Elements
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const movesDisplay = document.getElementById('movesDisplay');
+    const highScoreDisplay = document.getElementById('highScoreDisplay');
+    const restartButton = document.getElementById('restartButton');
+
+    // --- Firebase/Game State Variables ---
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    let db;
+    let auth;
+    let userId = null;
+    let currentHighScore = 0;
+    let isAuthReady = false;
+    
+    // --- Utility Functions ---
+
+    function getRandomColor() {
+        return COLORS[Math.floor(Math.random() * COLORS.length)];
+    }
+
+    function getBubbleX(row, col) {
+        let offsetX = BUBBLE_RADIUS;
+        if (row % 2 !== 0) {
+            offsetX += BUBBLE_RADIUS;
+        }
+        let maxCols = (row % 2 === 0) ? COLUMNS : COLUMNS - 1;
+        if (col >= maxCols) col = maxCols - 1; 
+
+        return BUBBLE_RADIUS + col * BUBBLE_DIAMETER + offsetX;
+    }
+
+    function getBubbleY(row) {
+        return BUBBLE_RADIUS + row * BUBBLE_GAP;
+    }
+
+    // Finds the nearest empty grid slot for TOP WALL collision.
+    function findNearestAvailableGridSlot(x, y) {
+        let bestRow = -1;
+        let bestCol = -1;
+        let minDistanceSq = Infinity;
+
+        for (let r = 0; r < grid.length + 2; r++) { 
+            let offsetX = BUBBLE_RADIUS;
+            if (r % 2 !== 0) {
+                offsetX += BUBBLE_RADIUS;
+            }
+            
+            const targetY = getBubbleY(r);
+            const targetCol = Math.round((x - offsetX - BUBBLE_RADIUS) / BUBBLE_DIAMETER);
+            const maxCols = COLUMNS - (r % 2 === 0 ? 0 : 1);
+            const col = Math.max(0, Math.min(maxCols - 1, targetCol));
+            const targetX = getBubbleX(r, col);
+            
+            const dx = targetX - x;
+            const dy = targetY - y;
+            const distanceSq = dx * dx + dy * dy;
+
+            if (distanceSq < minDistanceSq) {
+                if (r < grid.length && grid[r] && grid[r][col]) {
+                    continue; 
+                }
+
+                minDistanceSq = distanceSq;
+                bestRow = r;
+                bestCol = col;
+            }
+        }
+        
+        if (minDistanceSq < BUBBLE_DIAMETER * BUBBLE_DIAMETER * 2.25) {
+             return { row: bestRow, col: bestCol };
+        }
+        
+        return null;
+    }
+
+    // Finds the best *empty neighbor* for attachment after hitting a stationary bubble.
+    function findCollisionAttachmentSlot(collidedBubbleRow, collidedBubbleCol, flyingBubbleX, flyingBubbleY) {
+        let bestRow = -1;
+        let bestCol = -1;
+        let minDistanceSq = Infinity;
+        
+        const r = collidedBubbleRow;
+        const isOdd = r % 2 !== 0;
+
+        // Hexagonal Grid Neighbors offsets
+        const neighbors = [
+            [-1, 0], [1, 0],         
+            [0, -1], [0, 1],         
+            [-1, isOdd ? 1 : -1],    
+            [1, isOdd ? 1 : -1]      
+        ];
+        
+        for (const [dr, dc] of neighbors) {
+            const nr = r + dr;
+            const nc = collidedBubbleCol + dc;
+            
+            if (nr >= 0 && nr < grid.length + 1) { 
+                
+                const slotIsEmpty = nr >= grid.length || (grid[nr] && !grid[nr][nc]); 
+
+                if (slotIsEmpty) {
+                    
+                    const maxCols = COLUMNS - (nr % 2 === 0 ? 0 : 1);
+                    if (nc >= 0 && nc < maxCols) {
+                        
+                        const targetX = getBubbleX(nr, nc);
+                        const targetY = getBubbleY(nr);
+                        
+                        const dx = targetX - flyingBubbleX;
+                        const dy = targetY - flyingBubbleY;
+                        const distanceSq = dx * dx + dy * dy;
+
+                        if (distanceSq < minDistanceSq) {
+                            minDistanceSq = distanceSq;
+                            bestRow = nr;
+                            bestCol = nc;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (bestRow !== -1) {
+             return { row: bestRow, col: bestCol };
+        }
+        
+        return findNearestAvailableGridSlot(flyingBubbleX, flyingBubbleY);
+    }
+    
+    const getNearestGridSlot = findNearestAvailableGridSlot; 
+
+
+    // --- Bubble Class ---
+
+    class Bubble {
+        constructor(x, y, color) {
+            this.x = x;
+            this.y = y;
+            this.radius = BUBBLE_RADIUS;
+            this.color = color;
+            this.vx = 0;
+            this.vy = 0;
+        }
+
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            
+            ctx.fillStyle = this.color === 'red' ? '#ef4444' : 
+                            this.color === 'blue' ? '#3b82f6' : 
+                            this.color === 'green' ? '#22c55e' : 
+                            this.color === 'yellow' ? '#facc15' : 
+                            this.color === 'purple' ? '#a855f7' : '#ffffff';
+
+            ctx.fill();
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.closePath();
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+        }
+    }
+
+    // --- Game Logic Functions ---
+
+    function initGrid() {
+        grid = [];
+        const rowsToPopulate = 5;
+        for (let r = 0; r < rowsToPopulate; r++) {
+            let colsInRow = (r % 2 === 0) ? COLUMNS : COLUMNS - 1;
+            grid[r] = new Array(COLUMNS).fill(null);
+            
+            for (let c = 0; c < colsInRow; c++) {
+                const x = getBubbleX(r, c);
+                const y = getBubbleY(r);
+                grid[r][c] = new Bubble(x, y, getRandomColor());
+            }
+        }
+    }
+
+    function newCurrentBubble() {
+        const startX = canvas.width / 2;
+        const startY = canvas.height - BUBBLE_RADIUS - 10;
+        currentBubble = new Bubble(startX, startY, getRandomColor());
+    }
+    
+    function updateScore(points) {
+        score += points;
+        scoreDisplay.textContent = `Score: ${score}`;
+    }
+    
+    // NEW: Function to update the moves display
+    function updateMovesDisplay() {
+        movesDisplay.textContent = `Moves: ${movesLeft}`;
+        movesDisplay.classList.remove('text-red-400');
+        movesDisplay.classList.remove('text-yellow-400');
+        
+        if (movesLeft <= 5) {
+            movesDisplay.classList.add('text-red-400'); // Red for low moves
+        } else if (movesLeft > 0) {
+            // Re-add a general color class if needed, or let it default. Using a placeholder for visibility.
+            // Based on original HTML, a color class might be desired.
+            movesDisplay.classList.add('text-yellow-400'); 
+        }
+    }
+
+    function findConnectedBubbles(startRow, startCol, color) {
+        if (!grid[startRow] || !grid[startRow][startCol] || grid[startRow][startCol].color !== color) {
+            return [];
+        }
+
+        const queue = [{ r: startRow, c: startCol }];
+        const visited = new Set();
+        const cluster = [];
+
+        while (queue.length > 0) {
+            const { r, c } = queue.shift();
+            const key = `${r},${c}`;
+
+            if (visited.has(key) || !grid[r] || !grid[r][c] || grid[r][c].color !== color) {
+                continue;
+            }
+
+            visited.add(key);
+            cluster.push({ r, c });
+            
+            const isOdd = r % 2 !== 0;
+            const neighbors = [
+                [-1, 0], [1, 0], [0, -1], [0, 1], 
+                [-1, isOdd ? 1 : -1], [1, isOdd ? 1 : -1]
+            ];
+
+            neighbors.forEach(([dr, dc]) => {
+                const nr = r + dr;
+                const nc = c + dc;
+                if (nr >= 0 && nr < grid.length && grid[nr] && grid[nr][nc]) {
+                     queue.push({ r: nr, c: nc });
+                }
+            });
+        }
+        return cluster;
+    }
+    
+    function popAndCheckFloating(cluster) {
+        let poppedSomething = false;
+
+        if (cluster.length >= 3) {
+            poppedSomething = true;
+            cluster.forEach(({ r, c }) => {
+                if (grid[r] && grid[r][c]) {
+                    grid[r][c] = null;
+                    updateScore(10);
+                }
+            });
+            if (cluster.length > 3) {
+                updateScore((cluster.length - 3) * 50);
+            }
+            
+            const floatingBubbles = findFloatingBubbles();
+            floatingBubbles.forEach(({r, c}) => {
+                if (grid[r] && grid[r][c]) {
+                    grid[r][c] = null;
+                    updateScore(25);
+                }
+            });
+        }
+        
+        return poppedSomething;
+    }
+
+    function findFloatingBubbles() {
+        if (grid.length === 0 || grid.flat().filter(b => b !== null).length === 0) return [];
+        
+        const visited = new Array(grid.length).fill(0).map((_, r) => new Array(COLUMNS).fill(false));
+        const connected = new Set();
+        const queue = [];
+
+        for (let c = 0; c < grid[0].length; c++) {
+            if (grid[0][c]) {
+                queue.push({ r: 0, c: c });
+            }
+        }
+
+        while (queue.length > 0) {
+            const { r, c } = queue.shift();
+            const key = `${r},${c}`;
+
+            if (r < 0 || r >= grid.length || c < 0 || c >= COLUMNS || !grid[r] || !grid[r][c] || visited[r][c]) {
+                continue;
+            }
+            
+            visited[r][c] = true;
+            connected.add(key);
+
+            const isOdd = r % 2 !== 0;
+            const neighbors = [
+                [-1, 0], [1, 0], [0, -1], [0, 1], 
+                [-1, isOdd ? 1 : -1], [1, isOdd ? 1 : -1]
+            ];
+            
+            neighbors.forEach(([dr, dc]) => {
+                queue.push({ r: r + dr, c: c + dc });
+            });
+        }
+
+        const floating = [];
+        for (let r = 0; r < grid.length; r++) {
+            for (let c = 0; c < COLUMNS; c++) {
+                if (grid[r][c] && !visited[r][c]) {
+                    floating.push({r, c});
+                }
+            }
+        }
+        return floating;
+    }
+    
+    // --- Firestore Logic (No Changes) ---
+
+    function getHighscoreDocRef() {
+        return doc(db, 'artifacts', appId, 'users', userId, 'game_data', 'high_score');
+    }
+    
+    function loadHighScore() {
+        if (!db || !userId) return;
+
+        const docRef = getHighscoreDocRef();
+        
+        onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                currentHighScore = docSnap.data().score || 0;
+            } else {
+                currentHighScore = 0;
+            }
+            highScoreDisplay.textContent = `High Score: ${currentHighScore}`;
+        }, (error) => {
+            console.error("Error loading high score:", error);
+            highScoreDisplay.textContent = `High Score: Error`;
+        });
+    }
+
+    function saveHighScore(newScore) {
+        if (!db || !userId || newScore <= currentHighScore) return;
+
+        console.log(`New High Score achieved: ${newScore}`);
+        const docRef = getHighscoreDocRef();
+        
+        setDoc(docRef, { score: newScore, date: new Date().toISOString() }, { merge: false })
+            .catch(error => {
+                console.error("Error saving high score:", error);
+            });
+        currentHighScore = newScore;
+    }
+
+    function gameOver(win) {
+        isGameOver = true;
+        
+        if (score > currentHighScore) {
+             saveHighScore(score);
+        }
+
+        const message = win ? "You Win! Final Score: " : "Game Over! You lost at score: ";
+        
+        movesDisplay.classList.remove('text-red-400');
+        movesDisplay.classList.add('text-yellow-400', 'font-extrabold');
+        movesDisplay.textContent = message + score; 
+        
+        flyingBubble = null;
+        currentBubble = null;
+    }
+    
+    // --- Restart Logic ---
+    function restartGame() {
+        
+        // Reset state
+        score = 0;
+        isGameOver = false;
+        flyingBubble = null;
+        movesLeft = 50; // MODIFIED: Reset moves
+        
+        // Reset UI
+        scoreDisplay.textContent = `Score: 0`;
+        movesDisplay.classList.remove('text-yellow-400', 'font-extrabold', 'text-red-400'); 
+        updateMovesDisplay(); // MODIFIED: Initial move count display
+
+        // Reinitialize the board and shooter
+        initGrid();
+        newCurrentBubble();
+    }
+    
+    restartButton.addEventListener('click', restartGame);
+
+    // --- Main Game Loop Functions ---
+
+    // Handles the shooting of the current bubble
+    canvas.addEventListener('mousedown', (e) => {
+        if (isGameOver || flyingBubble || !currentBubble) return;
+        if (movesLeft <= 0) return; // Prevent shooting if moves are depleted
+
+        const dx = e.offsetX - currentBubble.x;
+        const dy = e.offsetY - currentBubble.y;
+
+        if (dy > 0) return; // Prevent shooting backwards
+
+        const magnitude = Math.sqrt(dx * dx + dy * dy);
+
+        // Normalize and scale to shoot speed
+        currentBubble.vx = (dx / magnitude) * SHOOT_SPEED;
+        currentBubble.vy = (dy / magnitude) * SHOOT_SPEED; 
+
+        flyingBubble = currentBubble;
+        currentBubble = null;
+        
+        // MODIFIED: Decrement moves after a successful shot
+        movesLeft--;
+        updateMovesDisplay();
+
+        newCurrentBubble();
+    });
+    
+    // Updates all game state elements
+    function update() {
+        if (isGameOver) return;
+
+        // Update Flying Bubble
+        if (flyingBubble) {
+            flyingBubble.update();
+
+            // 1. Wall Collision (Bounce off left/right walls)
+            if (flyingBubble.x - BUBBLE_RADIUS < 0 || flyingBubble.x + BUBBLE_RADIUS > canvas.width) {
+                flyingBubble.vx *= -1;
+            }
+
+            // 2. Top Wall Collision (Stop)
+            if (flyingBubble.y - BUBBLE_RADIUS < 0) {
+                const slot = getNearestGridSlot(flyingBubble.x, BUBBLE_RADIUS);
+                
+                if (slot) {
+                    if (slot.row >= grid.length) {
+                        grid.push(new Array(COLUMNS).fill(null)); 
+                    }
+                    
+                    flyingBubble.y = getBubbleY(slot.row); 
+                    flyingBubble.vx = 0;
+                    flyingBubble.vy = 0;
+                    grid[slot.row][slot.col] = flyingBubble;
+                    
+                    const cluster = findConnectedBubbles(slot.row, slot.col, flyingBubble.color);
+                    popAndCheckFloating(cluster);
+                }
+                flyingBubble = null;
+            }
+            
+            // 3. Stationary Bubble Collision (Stop)
+            for (let r = 0; r < grid.length; r++) {
+                for (let c = 0; c < grid[r].length; c++) {
+                    const stationary = grid[r][c];
+                    if (stationary) {
+                        const dx = flyingBubble.x - stationary.x;
+                        const dy = flyingBubble.y - stationary.y;
+                        const distanceSq = dx * dx + dy * dy;
+
+                        // Check for close proximity (collision)
+                        if (distanceSq < BUBBLE_DIAMETER * BUBBLE_DIAMETER * 0.99) {
+                            
+                            flyingBubble.vx = 0;
+                            flyingBubble.vy = 0;
+
+                            const slot = findCollisionAttachmentSlot(r, c, flyingBubble.x, flyingBubble.y);
+                            
+                            if (slot) {
+                                if (slot.row >= grid.length) {
+                                    grid.push(new Array(COLUMNS).fill(null)); 
+                                }
+                                
+                                flyingBubble.x = getBubbleX(slot.row, slot.col);
+                                flyingBubble.y = getBubbleY(slot.row);
+                                grid[slot.row][slot.col] = flyingBubble;
+
+                                const cluster = findConnectedBubbles(slot.row, slot.col, flyingBubble.color);
+                                popAndCheckFloating(cluster);
+                            }
+                            flyingBubble = null;
+                            break;
+                        }
+                    }
+                }
+                if (!flyingBubble) break;
+            }
+        }
+        
+        // Win/Lose Condition
+        let bubblesLeft = grid.flat().filter(b => b !== null).length;
+        if (bubblesLeft === 0) {
+            gameOver(true);
+            return;
+        }
+        
+        // Check for lose condition (bubbles hit the danger line)
+        if (grid.length > 0 && grid.some(row => row.some(b => b !== null && b.y > canvas.height - 100))) {
+             gameOver(false);
+             return;
+        }
+        
+        // MODIFIED: Check for moves loss condition (only if the flying bubble has landed/is null)
+        if (movesLeft <= 0 && flyingBubble === null) {
+            // Since we already checked for win (bubblesLeft === 0), if it's not a win, it's a loss.
+             gameOver(false);
+             return;
+        }
+    }
+
+    // Draws all game elements
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Stationary Bubbles
+        for (let r = 0; r < grid.length; r++) {
+            if (grid[r]) { 
+                for (let c = 0; c < grid[r].length; c++) {
+                    if (grid[r][c]) {
+                        grid[r][c].draw();
+                    }
+                }
+            }
+        }
+
+        // Draw Flying Bubble
+        if (flyingBubble) {
+            flyingBubble.draw();
+        }
+
+        // Draw Current (Shooter) Bubble
+        if (currentBubble) {
+            currentBubble.draw();
+        }
+        
+        // Draw Danger Line
+        const dangerY = canvas.height - 100;
+        ctx.beginPath();
+        ctx.moveTo(0, dangerY);
+        ctx.lineTo(canvas.width, dangerY);
+        ctx.strokeStyle = '#f87171';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.closePath();
+        
+        // Update game logic
+        update();
+
+        // Loop
+        window.animationFrameId = requestAnimationFrame(draw);
+    }
+    
+    // --- Initialization & Start ---
+    async function setupFirebase() {
+        if (!firebaseConfig) {
+            console.error("Firebase config not available. Cannot use Firestore for high score.");
+            return;
+        }
+        
+        const app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+
+        try {
+            if (initialAuthToken) {
+                await signInWithCustomToken(auth, initialAuthToken);
+            } else {
+                await signInAnonymously(auth);
+            }
+        } catch (error) {
+            console.error("Firebase authentication error:", error);
+            try { await signInAnonymously(auth); } catch (e) { console.error("Anonymous sign-in failed:", e); }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userId = user.uid;
+                loadHighScore();
+                isAuthReady = true;
+            } else {
+                console.log("No user signed in.");
+                userId = 'anonymous';
+            }
+        });
+    }
+
+    function startGame() {
+        if (!isAuthReady && firebaseConfig) {
+            setTimeout(startGame, 500); 
+            return;
+        }
+        
+        initGrid();
+        newCurrentBubble();
+        movesLeft = 50; // MODIFIED: Ensure initial moves are set
+        updateMovesDisplay(); // MODIFIED: Update display on start
+        if (!window.animationFrameId) {
+            draw();
+        }
+    }
+
+    window.onload = async function() {
+        if (firebaseConfig) {
+             await setupFirebase();
+        }
+        startGame();
+    }
+
+</script>
+</body>
+</html>
