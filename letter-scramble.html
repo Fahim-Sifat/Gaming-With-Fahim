@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Letter Scramble Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-dark: #4338ca;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --hint-color: #f59e0b; /* Amber */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Dark background for the page */
+            background-color: #111827;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        /* Custom glow for the scrambled word display */
+        .scrambled-word-display {
+            /* Mobile-first: Use slightly less wide letter spacing to prevent overflow on narrow screens */
+            letter-spacing: 0.35rem; 
+            text-shadow: 0 0 15px rgba(129, 140, 248, 0.7); 
+            transition: all 0.3s ease-out;
+        }
+
+        /* Apply wider spacing on medium screens and up */
+        @media (min-width: 640px) {
+            .scrambled-word-display {
+                letter-spacing: 0.5rem;
+            }
+        }
+
+        /* Styling the submit button interaction */
+        .game-button {
+            transition: all 0.15s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.15);
+        }
+
+        .game-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-button:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container" class="w-full max-w-lg bg-gray-900 rounded-xl shadow-2xl p-6 md:p-10 border border-gray-700">
+
+        <h1 class="text-4xl font-extrabold text-white mb-2 text-center">Letter Scramble</h1>
+        <p class="text-center text-gray-400 mb-8">Unscramble the letters to find the hidden word.</p>
+        
+        <!-- Difficulty Selector -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0 md:space-x-4">
+            <label for="difficulty-selector" class="text-lg font-semibold text-gray-300">Difficulty:</label>
+            <select id="difficulty-selector" class="w-full md:w-auto p-2 bg-gray-800 border border-indigo-600 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 appearance-none cursor-pointer">
+                <option value="EASY">Easy (30s)</option>
+                <option value="MEDIUM" selected>Medium (60s)</option>
+                <option value="HARD">Hard (90s)</option>
+            </select>
+        </div>
+
+
+        <div class="grid grid-cols-3 gap-4 mb-6 text-center">
+            <!-- Score Display -->
+            <div class="p-3 bg-gray-800 rounded-lg shadow-inner">
+                <p class="text-sm font-semibold text-gray-400 uppercase">Score</p>
+                <p id="score-display" class="text-2xl font-bold text-indigo-400 mt-1">0</p>
+            </div>
+            
+            <!-- High Score Display -->
+            <div class="p-3 bg-gray-800 rounded-lg shadow-inner">
+                <p class="text-sm font-semibold text-gray-400 uppercase">High Score</p>
+                <p id="high-score" class="text-2xl font-bold text-yellow-400 mt-1">0</p>
+            </div>
+
+            <!-- Timer Display -->
+            <div class="p-3 bg-gray-800 rounded-lg shadow-inner">
+                <p class="text-sm font-semibold text-gray-400 uppercase">Time Left</p>
+                <p id="timer-display" class="text-2xl font-bold text-white mt-1">00:00</p>
+            </div>
+        </div>
+
+        <!-- Scrambled Word Display Area -->
+        <div class="text-center mb-8">
+            <div id="scrambled-word" class="scrambled-word-display text-5xl md:text-6xl font-extrabold uppercase text-indigo-400 h-16 flex items-center justify-center tracking-widest select-none">
+                ...
+            </div>
+        </div>
+
+        <!-- Input and Submit Area -->
+        <div class="mb-6 flex space-x-2">
+            <input
+                type="text"
+                id="user-input"
+                placeholder="Type your guess here..."
+                class="flex-grow p-3 border-2 border-indigo-600 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-700 text-lg uppercase transition duration-150"
+                maxlength="10"
+            />
+            <button id="submit-button" class="game-button bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-5 rounded-lg text-lg">
+                Submit
+            </button>
+        </div>
+
+        <!-- Control Buttons (Hint and New Game) -->
+        <div class="text-center flex space-x-4">
+            <button id="hint-button" class="game-button flex-1 bg-yellow-600 hover:bg-yellow-500 text-white font-semibold py-3 px-4 rounded-lg text-lg">
+                Get Hint (-2 Pts)
+            </button>
+            <button id="new-word-button" class="game-button flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-4 rounded-lg text-lg">
+                Start New Game
+            </button>
+        </div>
+
+        <!-- Feedback Area -->
+        <div id="feedback-message" class="text-center h-10 flex items-center justify-center mt-4">
+            <!-- Game feedback will be displayed here -->
+        </div>
+
+    </div>
+<script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Set Firestore log level for debugging
+        setLogLevel('debug');
+        
+        // --- GLOBAL FIREBASE VARIABLES (Provided by Canvas Environment) ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        // --- GAME CONFIGURATION AND STATE ---
+        const WORDS = {
+            EASY: [
+                { word: "cat", hint: "A common house pet." },
+                { word: "dog", hint: "Man's best friend." },
+                { word: "sun", hint: "The center of our solar system." },
+                { word: "run", hint: "To move faster than a walk." },
+                { word: "pen", hint: "Used for writing with ink." },
+                { word: "eat", hint: "What you do to food." },
+                { word: "fly", hint: "To move through the air." },
+                { word: "book", hint: "Contains pages and stories." },
+                { word: "tree", hint: "A large plant with a wooden trunk." },
+                { word: "fire", hint: "Produces heat and light." },
+                { word: "ball", hint: "A round object used in sports." },
+                { word: "game", hint: "An activity for fun or competition." },
+                { word: "cold", hint: "The opposite of hot." },
+                { word: "warm", hint: "Pleasantly heated, but not hot." },
+                { word: "read", hint: "To look at and comprehend written words." },
+                { word: "lamp", hint: "A device for giving light." },
+                { word: "road", hint: "A long, hard surface for vehicles." },
+                { word: "wind", hint: "Moving air." },
+                { word: "jump", "hint": "To push oneself into the air." },
+                { word: "walk", "hint": "To move by putting one foot in front of the other." },
+                {"word": "house", "hint": "Where you live."},
+        {"word": "write", "hint": "The act of putting letters on paper."},
+        {"word": "money", "hint": "Used for buying things."},
+        {"word": "game", "hint": "A form of play or sport."},
+        {"word": "road", "hint": "A wide way leading from one place to another."},
+        {"word": "time", "hint": "What you measure with a clock."},
+        {"word": "door", "hint": "An entry point."},
+        {"word": "book", "hint": "A source of knowledge or story."},
+        {"word": "fish", "hint": "An aquatic animal."},
+        {"word": "tree", "hint": "A tall, woody plant."},
+        {"word": "apple", "hint": "A common red fruit."},
+        {"word": "grape", "hint": "Small fruit often used to make wine."},
+        {"word": "beach", "hint": "Sandy edge of the ocean."},
+        {"word": "train", "hint": "Long vehicle running on rails."},
+        {"word": "flame", "hint": "The visible part of fire."},
+        {"word": "stone", "hint": "A small rock."},
+        {"word": "river", "hint": "A large natural stream of water."},
+        {"word": "brush", "hint": "Used to paint or style hair."},
+        {"word": "smile", "hint": "Facial expression showing happiness."},
+        {"word": "plant", "hint": "Living organism that photosynthesizes."},
+        {"word": "glass", "hint": "Transparent material."},
+        {"word": "watch", "hint": "Tells you the time on your wrist."},
+        {"word": "earth", "hint": "Our planet."},
+        {"word": "space", "hint": "The universe beyond Earth's atmosphere."},
+        {"word": "voice", "hint": "Sound produced by a person's mouth."},
+        {"word": "dream", "hint": "Images and thoughts during sleep."},
+        {"word": "knife", "hint": "Used for cutting food."},
+        {"word": "socks", "hint": "Worn on the feet."},
+        {"word": "ghost", "hint": "A spirit of a dead person."},
+        {"word": "sugar", "hint": "Sweet white crystalline substance."},
+        {"word": "clerk", "hint": "An office worker or shop assistant."},
+        {"word": "pilot", "hint": "Flies an airplane."},
+        {"word": "score", "hint": "The number of points gained in a game."},
+        {"word": "prize", "hint": "An award for winning a competition."},
+        {"word": "radio", "hint": "Device that broadcasts sound."},
+        {"word": "hotel", "hint": "Temporary lodging for travelers."},
+        {"word": "month", "hint": "A division of the year (e.g., January)."},
+        {"word": "sight", "hint": "The ability to see."},
+        {"word": "youth", "hint": "The period between childhood and adult age."},
+        {"word": "angel", "hint": "A spiritual being, often depicted with wings."},
+        {"word": "cabin", "hint": "A small wooden shelter."},
+        {"word": "crate", "hint": "A large wooden container for goods."},
+        {"word": "drain", "hint": "A channel for liquid to flow away."},
+        {"word": "feast", "hint": "A large, elaborate meal."},
+        {"word": "globe", "hint": "A spherical model of the Earth."},
+        {"word": "heart", "hint": "The main organ pumping blood."},
+        {"word": "image", "hint": "A representation of the external form of a person or thing."},
+        {"word": "joker", "hint": "Someone who tells funny jokes."},
+        {"word": "kiosk", "hint": "A small, open-fronted booth or cubicle."},
+        {"word": "lever", "hint": "A rigid bar used to lift or move heavy objects."},
+        {"word": "magic", "hint": "The use of supernatural powers."},
+        {"word": "nudge", "hint": "A slight push or poke."},
+        {"word": "onion", "hint": "A pungent vegetable."},
+        {"word": "patio", "hint": "An outdoor area adjoining a house."},
+        {"word": "quake", "hint": "A sudden violent shaking of the ground."},
+        {"word": "robot", "hint": "A machine capable of carrying out complex actions automatically."},
+        {"word": "slope", "hint": "A surface that is higher on one end."},
+        {"word": "title", "hint": "The name of a book or film."},
+        {"word": "union", "hint": "The action or fact of joining or being joined."},
+        {"word": "virus", "hint": "A computer program or biological agent that spreads."},
+        {"word": "wagon", "hint": "A four-wheeled vehicle."},
+        {"word": "xenon", "hint": "A noble gas element (symbol Xe)."},
+        {"word": "yacht", "hint": "A medium-sized sailboat."},
+        {"word": "zebra", "hint": "African striped equine animal."},
+        {"word": "anger", "hint": "Strong feeling of displeasure."},
+        {"word": "axiom", "hint": "A self-evident truth."},
+        {"word": "blitz", "hint": "A sudden, fast attack."},
+        {"word": "curve", "hint": "A line or outline that gradually deviates from being straight."},
+        {"word": "drunk", "hint": "Intoxicated by alcohol."},
+        {"word": "elbow", "hint": "The joint connecting the forearm and upper arm."},
+        {"word": "fiber", "hint": "A thread or filament from which a vegetable tissue is formed."},
+        {"word": "gnome", "hint": "A legendary dwarfish creature."},
+        {"word": "hoard", "hint": "A stock or store of money or valued objects."},
+        {"word": "igloo", "hint": "A dome-shaped Eskimo house."},
+        {"word": "ivory", "hint": "A hard creamy-white material from tusks."},
+        {"word": "joust", "hint": "A medieval sporting contest between two knights."},
+        {"word": "laser", "hint": "Device that emits coherent light."},
+        {"word": "maxim", "hint": "A short, pithy statement expressing a general truth."},
+        {"word": "nylon", "hint": "A tough, light synthetic polymer."},
+        {"word": "opera", "hint": "A dramatic work set to music."},
+        {"word": "pouch", "hint": "A small bag or sack."},
+        {"word": "quart", "hint": "A unit of liquid capacity, equal to two pints."},
+        {"word": "realm", "hint": "A kingdom or domain."},
+        {"word": "shard", "hint": "A piece of broken ceramic, metal, or glass."},
+        {"word": "thigh", "hint": "The part of the human leg between the hip and the knee."},
+        {"word": "vault", "hint": "A large room or chamber used for storage, especially underground."},
+        {"word": "wheel", "hint": "A circular frame that revolves on an axle."},
+        {"word": "yield", "hint": "Produce or provide something."},
+        {"word": "azure", "hint": "Bright blue in color."},
+        {"word": "beast", "hint": "A large, dangerous animal."},
+        {"word": "cello", "hint": "A large musical instrument of the violin family."},
+        {"word": "duvet", "hint": "A soft quilt used as a blanket."},
+        {"word": "fjord", "hint": "A long, narrow, deep inlet of the sea."},
+        {"word": "gloom", "hint": "Partial or total darkness."},
+        {"word": "haste", "hint": "Excessive speed or urgency of movement or action."},
+        {"word": "index", "hint": "An alphabetical list of names, subjects, etc., with references to the places where they occur."},
+        {"word": "jewel", "hint": "A precious stone."},
+        {"word": "kneel", "hint": "To bend the knee."},
+        {"word": "lunar", "hint": "Relating to the moon."},
+        {"word": "mirth", "hint": "Amusement, especially as expressed in laughter."},
+        {"word": "novel", "hint": "A fictional prose narrative of book length."},
+        {"word": "organ", "hint": "A part of an animal or plant adapted for a particular function."},
+        {"word": "poppy", "hint": "A herbaceous plant with showy flowers."},
+        {"word": "quart", "hint": "A unit of liquid capacity, equal to two pints."},
+        {"word": "roast", "hint": "Cook food, especially meat, by prolonged exposure to heat."},
+        {"word": "spicy", "hint": "Food seasoned with hot flavorings."},
+        {"word": "tango", "hint": "A ballroom dance of Latin American origin."},
+        {"word": "umbra", "hint": "The fully shaded inner region of a shadow cast by an opaque object."},
+        {"word": "vowel", "hint": "A, E, I, O, U are examples."},
+        {"word": "worry", "hint": "Feel or show anxiety and concern."},
+        {"word": "yummy", "hint": "Extremely tasty."},
+        {"word": "zippy", "hint": "Fast or quick."},
+        {"word": "alert", "hint": "Quick to notice any unusual or potentially dangerous circumstances."},
+        {"word": "blunt", "hint": "Having a worn-down edge or point; not sharp."},
+        {"word": "creep", "hint": "Move slowly and carefully in order to avoid being heard or noticed."},
+        {"word": "doubt", "hint": "A feeling of uncertainty or lack of conviction."},
+        {"word": "exist", "hint": "Have objective reality or being."},
+        {"word": "ferry", "hint": "A boat or ship for conveying passengers and goods."},
+        {"word": "greet", "hint": "Give a polite word of recognition or welcome."},
+        {"word": "honor", "hint": "High respect; great esteem."},
+        {"word": "irony", "hint": "Expression of meaning by language that usually signifies the opposite."},
+        {"word": "local", "hint": "Relating to a particular area or neighborhood."}
+    
+            ],
+            MEDIUM: [
+                 {"word": "problem", "hint": "A difficult situation."},
+        {"word": "manager", "hint": "A person in charge of others."},
+        {"word": "library", "hint": "A building housing books."},
+        {"word": "system", "hint": "A set of principles or procedures."},
+        {"word": "travel", "hint": "Going from one place to another."},
+        {"word": "ticket", "hint": "A paper granting admission."},
+        {"word": "forest", "hint": "A large area covered chiefly with trees."},
+        {"word": "energy", "hint": "The strength and vitality required for sustained activity."},
+        {"word": "camera", "hint": "Used to take photos."},
+        {"word": "rocket", "hint": "A spacecraft propulsion device."},
+        {"word": "history", "hint": "The study of past events."},
+        {"word": "speaker", "hint": "A person giving a talk, or an audio device."},
+        {"word": "journey", "hint": "An act of traveling from one place to another."},
+        {"word": "weather", "hint": "State of the atmosphere (e.g., sunny, rain)."},
+        {"word": "kingdom", "hint": "A country, state, or territory ruled by a king or queen."},
+        {"word": "freedom", "hint": "The power or right to act, speak, or think as one wants."},
+        {"word": "picture", "hint": "A painting, drawing, or photograph."},
+        {"word": "stomach", "hint": "The internal organ that digests food."},
+        {"word": "diamond", "hint": "A precious stone, hardest known mineral."},
+        {"word": "silence", "hint": "Complete absence of sound."},
+        {"word": "traffic", "hint": "Vehicles moving on a road."},
+        {"word": "victory", "hint": "Winning a battle or competition."},
+        {"word": "whisper", "hint": "Speaking very softly."},
+        {"word": "balloon", "hint": "An inflatable rubber bag."},
+        {"word": "element", "hint": "A basic constituent part."},
+        {"word": "promise", "hint": "A declaration that one will do something."},
+        {"word": "rainbow", "hint": "An arc of colors visible in the sky."},
+        {"word": "station", "hint": "A regular stopping place on a public transportation route."},
+        {"word": "balance", "hint": "An even distribution of weight."},
+        {"word": "capital", "hint": "The most important city or town of a country."},
+        {"word": "density", "hint": "Mass per unit volume."},
+        {"word": "edition", "hint": "A particular form or version of a published text."},
+        {"word": "funeral", "hint": "A ceremony for burying a dead person."},
+        {"word": "grocery", "hint": "Items of food sold in a food store."},
+        {"word": "illegal", "hint": "Forbidden by law."},
+        {"word": "machine", "hint": "An apparatus using mechanical power."},
+        {"word": "quality", "hint": "A distinguishing characteristic."},
+        {"word": "trouble", "hint": "Difficulty or problems."},
+        {"word": "average", "hint": "A number expressing the central value in a set of data."},
+        {"word": "bravery", "hint": "Courageous behavior or character."},
+        {"word": "closure", "hint": "The act of closing or the feeling of an end."},
+        {"word": "deposit", "hint": "A sum of money placed in a bank account."},
+        {"word": "fortune", "hint": "A large amount of money or wealth."},
+        {"word": "gravity", "hint": "The force that attracts bodies toward the center of the Earth."},
+        {"word": "harmony", "hint": "Agreement or concord."},
+        {"word": "inspire", "hint": "Fill someone with the urge or ability to do something."},
+        {"word": "lecture", "hint": "An educational talk to an audience."},
+        {"word": "loyalty", "hint": "Faithfulness to a person, cause, or belief."},
+        {"word": "minimum", "hint": "The least or smallest amount or quantity possible."},
+        {"word": "nuclear", "hint": "Relating to the atomic nucleus."},
+        {"word": "passage", "hint": "A short excerpt from a book or text."},
+        {"word": "refugee", "hint": "A person who has been forced to leave their country."},
+        {"word": "reserve", "hint": "Keep something for future use."},
+        {"word": "society", "hint": "People living together in an organized community."},
+        {"word": "summary", "hint": "A brief statement of the main points."},
+        {"word": "teacher", "hint": "Person who instructs students."},
+        {"word": "welcome", "hint": "An act of greeting someone."},
+        {"word": "thought", "hint": "An idea or opinion produced by thinking."},
+        {"word": "explain", "hint": "Make clear to someone by describing it in detail."},
+        {"word": "science", "hint": "Knowledge about the physical world."},
+        {"word": "giraffe", "hint": "Tall African animal with a very long neck."},
+        {"word": "alcohol", "hint": "Colorless volatile flammable liquid."},
+        {"word": "browser", "hint": "Software application for accessing information on the World Wide Web."},
+        {"word": "concept", "hint": "An abstract idea."},
+        {"word": "culture", "hint": "The customs, arts, social institutions, and achievements of a particular nation, people, or group."},
+        {"word": "declare", "hint": "Say something in a solemn and formal way."},
+        {"word": "elegant", "hint": "Graceful and stylish in appearance or manner."},
+        {"word": "fashion", "hint": "A popular style or practice."},
+        {"word": "forever", "hint": "For all future time; eternally."},
+        {"word": "gateway", "hint": "An opening in a wall or fence."},
+        {"word": "hospital", "hint": "Institution providing medical and surgical treatment."},
+        {"word": "insight", "hint": "The capacity to gain an accurate and deep intuitive understanding of a person or thing."},
+        {"word": "justice", "hint": "Fairness in the way people are treated."},
+        {"word": "magnify", "hint": "Make something appear larger than it is."},
+        {"word": "nominal", "hint": "Existing in name only."},
+        {"word": "offense", "hint": "A breach of a law or rule; an illegal act."},
+        {"word": "passion", "hint": "Strong and barely controllable emotion."},
+        {"word": "shelter", "hint": "A place providing protection from bad weather or danger."},
+        {"word": "sphere", "hint": "A round solid figure."},
+        {"word": "terrain", "hint": "A stretch of land, especially with regard to its physical features."},
+        {"word": "vehicle", "hint": "A means of conveying people or goods."},
+        {"word": "witness", "hint": "A person who sees an event happen."},
+        {"word": "account", "hint": "A report or description of an event or experience."},
+        {"word": "benefit", "hint": "An advantage or profit gained from something."},
+        {"word": "channel", "hint": "A band of frequencies used in radio or television."},
+        {"word": "dynamic", "hint": "Characterized by constant change, activity, or progress."},
+        {"word": "fiction", "hint": "Literature describing imaginary events and people."},
+        {"word": "isolate", "hint": "Separate from others."},
+        {"word": "mention", "hint": "Refer to something briefly and without detail."},
+        {"word": "outcome", "hint": "The way a thing turns out; a consequence."},
+        {"word": "affluent", "hint": "Having a great deal of money; wealthy."},
+        {"word": "analogy", "hint": "A comparison between two things for the purpose of explanation."},
+        {"word": "cabinet", "hint": "A storage cupboard or the official body of a government."},
+        {"word": "compass", "hint": "An instrument for determining direction."},
+        {"word": "deposit", "hint": "A sum of money placed in a bank account."},
+        {"word": "educate", "hint": "Give intellectual, moral, and social instruction to."},
+        {"word": "fantasy", "hint": "The faculty or activity of imagining things."},
+        {"word": "genuine", "hint": "Truly what it is said to be; authentic."},
+        {"word": "husband", "hint": "A married man."},
+        {"word": "ignite", "hint": "Catch fire or cause to catch fire."},
+        {"word": "jocular", "hint": "Fond of or characterized by joking."},
+        {"word": "kinetic", "hint": "Relating to or resulting from motion."},
+        {"word": "license", "hint": "A permit from an authority to own or use something."},
+        {"word": "monitor", "hint": "An instrument or device used for observing."},
+        {"word": "neutral", "hint": "Not helping or supporting either side in a conflict."},
+        {"word": "offspring", "hint": "A person's child or children."},
+        {"word": "parable", "hint": "A simple story used to illustrate a moral or spiritual lesson."},
+        {"word": "qualify", "hint": "Be entitled to a particular benefit or privilege."},
+        {"word": "release", "hint": "Allow or enable to escape from confinement; set free."},
+        {"word": "sibling", "hint": "Each of two or more children having one or both parents in common."},
+        {"word": "temple", "hint": "A building devoted to the worship of a god or gods."},
+        {"word": "uniform", "hint": "Remaining the same in all cases and at all times."},
+        {"word": "venture", "hint": "A risky or daring journey or undertaking."},
+        {"word": "witness", "hint": "A person who sees an event happen."},
+        {"word": "anxious", "hint": "Experiencing worry, unease, and nervousness."},
+        {"word": "budget", "hint": "An estimate of income and expenditure for a set period of time."},
+        {"word": "climax", "hint": "The most intense, exciting, or important point of something."},
+        {"word": "detect", "hint": "Discover or identify the presence or existence of."},
+        {"word": "empire", "hint": "An extensive group of states or countries under a single supreme authority."},
+        {"word": "fiscal", "hint": "Relating to government revenue, especially taxes."},
+    
+                { word: "apple", hint: "A popular red or green fruit." },
+                { word: "chair", hint: "Used for sitting." },
+                { word: "table", hint: "A piece of furniture with a flat top." },
+                { word: "earth", hint: "The planet we live on." },
+                { word: "music", hint: "Organized sound." },
+                { word: "river", hint: "A large natural stream of water." },
+                { word: "ocean", hint: "Vast body of saltwater." },
+                { word: "plant", hint: "Grows in the soil and has leaves." },
+                { word: "house", hint: "A building for human habitation." },
+                { word: "light", hint: "What allows you to see." },
+                { word: "friend", hint: "A person you know and like." },
+                { word: "street", hint: "A public road in a town." },
+                { word: "window", hint: "Glass pane in a wall." },
+                { word: "pencil", hint: "Used for writing or drawing." },
+                { word: "camera", hint: "Used to take photos." },
+                { word: "bottle", hint: "A container for liquid with a narrow neck." },
+                { word: "purple", hint: "A color between blue and red." },
+                { word: "jacket", hint: "Outer garment worn for warmth." },
+                { word: "travel", hint: "To go from one place to another." },
+                { word: "coffee", hint: "A popular caffeinated drink." }
+            ],
+            HARD: [
+                 {"word": "programming", "hint": "The job of a software developer."},
+        {"word": "architecture", "hint": "The art of design and construction."},
+        {"word": "responsibility", "hint": "Being accountable for something."},
+        {"word": "information", "hint": "Facts provided or learned."},
+        {"word": "university", "hint": "An institution of higher learning."},
+        {"word": "helicopter", "hint": "An aircraft with rotating blades."},
+        {"word": "celebration", "hint": "A social gathering for a happy occasion."},
+        {"word": "achievement", "hint": "A thing done successfully."},
+        {"word": "temperature", "hint": "Measure of heat or cold."},
+        {"word": "organization", "hint": "A structured group of people."},
+        {"word": "dictionary", "hint": "A book listing words and their meanings."}, 
+        {"word": "generation", "hint": "All the people born and living at about the same time."}, 
+        {"word": "telescope", "hint": "Optical instrument to view distant objects."}, 
+        {"word": "watermelon", "hint": "A large fruit with green skin and red pulp."}, 
+        {"word": "anniversary", "hint": "The date on which an event took place in a previous year."},
+        {"word": "conversation", "hint": "A talk between two or more people."},
+        {"word": "experiment", "hint": "A scientific procedure undertaken to make a discovery."},
+        {"word": "foundation", "hint": "The basis or groundwork of anything."},
+        {"word": "headquarters", "hint": "The main offices of an organization."},
+        {"word": "institution", "hint": "A large, important organization (e.g., a college)."},
+        {"word": "maintenance", "hint": "The process of preserving a condition or state."},
+        {"word": "personality", "hint": "The combination of characteristics that make up an individual's distinct character."},
+        {"word": "preparation", "hint": "The action or process of making something ready."},
+        {"word": "refrigerator", "hint": "An appliance for keeping food cool."},
+        {"word": "strawberry", "hint": "A sweet, soft red fruit."},
+        {"word": "supermarket", "hint": "A large self-service food store."},
+        {"word": "transportation", "hint": "The movement of goods or people."},
+        {"word": "vocabulary", "hint": "The words used by a person or group."},
+        {"word": "discipline", "hint": "The practice of training people to obey rules."},
+        {"word": "electricity", "hint": "A form of energy resulting from the existence of charged particles."},
+        {"word": "imagination", "hint": "The faculty of forming new ideas."},
+        {"word": "journalist", "hint": "A person who writes for newspapers or magazines."},
+        {"word": "millennium", "hint": "A period of a thousand years."},
+        {"word": "philosophy", "hint": "The study of general and fundamental problems."},
+        {"word": "restaurant", "hint": "A place where people pay to eat meals."},
+        {"word": "yesterday", "hint": "The day before today."},
+        {"word": "amendment", "hint": "A minor change or addition designed to improve a text."},
+        {"word": "atmosphere", "hint": "The envelope of gases surrounding the Earth."},
+        {"word": "competition", "hint": "The act of striving against others to win."},
+        {"word": "development", "hint": "The process of growing or improving."},
+        {"word": "engineering", "hint": "The application of science and math to design."},
+        {"word": "examination", "hint": "A detailed inspection or test."},
+        {"word": "explanation", "hint": "A statement made to clarify something."},
+        {"word": "flexibility", "hint": "The quality of bending easily without breaking."},
+        {"word": "geography", "hint": "The study of places and the relationships between people and their environments."},
+        {"word": "hospitality", "hint": "The friendly reception and entertainment of guests."},
+        {"word": "investment", "hint": "The action or process of investing money for profit."},
+        {"word": "leadership", "hint": "The action of leading a group of people."},
+        {"word": "manufacturer", "hint": "A person or company that makes goods."},
+        {"word": "nationwide", "hint": "Extending or reaching throughout a whole country."},
+        {"word": "opportunity", "hint": "A set of circumstances that makes it possible to do something."},
+        {"word": "photography", "hint": "The art or practice of taking and processing photographs."},
+        {"word": "protection", "hint": "The action of keeping someone or something safe."},
+        {"word": "recognition", "hint": "The action of identifying someone or something."},
+        {"word": "secretary", "hint": "An administrative assistant."},
+        {"word": "suggestion", "hint": "An idea or plan put forward for consideration."},
+        {"word": "technology", "hint": "The application of scientific knowledge for practical purposes."},
+        {"word": "withdrawal", "hint": "The action of taking money out of an account."},
+        {"word": "accession", "hint": "The attainment of a position of power or high office."},
+        {"word": "admiration", "hint": "Respect and warm approval."},
+        {"word": "aggression", "hint": "Hostile or violent behavior or attitudes."},
+        {"word": "announcement", "hint": "A public or formal notice."},
+        {"word": "biography", "hint": "An account of someone's life written by someone else."},
+        {"word": "championship", "hint": "A competition for the title of champion."},
+        {"word": "consequence", "hint": "A result or effect of an action or condition."},
+        {"word": "demonstration", "hint": "An act of showing that something exists or is true."},
+        {"word": "effectiveness", "hint": "The degree to which something is successful in producing a desired result."},
+        {"word": "environment", "hint": "The surroundings or conditions in which a person, animal, or plant lives."},
+        {"word": "fascinating", "hint": "Extremely interesting."},
+        {"word": "fundamental", "hint": "Forming a necessary base or core."},
+        {"word": "guarantee", "hint": "A formal assurance that certain conditions will be fulfilled."},
+        {"word": "headmaster", "hint": "The person in charge of a school."},
+        {"word": "illustrated", "hint": "Provided with pictures."},
+        {"word": "introduction", "hint": "The action of introducing something or someone."},
+        {"word": "legislature", "hint": "The part of government that makes laws."},
+        {"word": "marketplace", "hint": "An open space where a market is held."},
+        {"word": "navigation", "hint": "The process or activity of accurately ascertaining one's position and planning a route."},
+        {"word": "observation", "hint": "The action or process of closely watching something."},
+        {"word": "presidency", "hint": "The office of president."},
+        {"word": "propaganda", "hint": "Information, especially of a biased nature, used to promote a political cause or point of view."},
+        {"word": "recollection", "hint": "The action or faculty of remembering something."},
+        {"word": "satisfaction", "hint": "Fulfillment of one's wishes, expectations, or needs."},
+        {"word": "simultaneously", "hint": "At the same time."},
+        {"word": "sovereignty", "hint": "Supreme power or authority."},
+        {"word": "specification", "hint": "A detailed description of the design and materials used to make something."},
+        {"word": "subsequently", "hint": "After a particular thing has happened; afterward."},
+        {"word": "superintendent", "hint": "A person who manages or supervises an organization or system."},
+        {"word": "supplementary", "hint": "Completing or enhancing something."},
+        {"word": "telecommunication", "hint": "Communication over a distance by cable, telegraph, telephone, or broadcasting."},
+        {"word": "undergraduate", "hint": "A student at a college or university who has not yet earned a bachelor's degree."},
+        {"word": "unforgettable", "hint": "Impossible to forget."},
+        {"word": "unfortunately", "hint": "It is a shame or regrettable that."},
+        {"word": "unnecessarily", "hint": "In a way that is not needed."},
+        {"word": "vulnerability", "hint": "The state of being exposed to the possibility of being attacked or harmed."},
+        {"word": "authorization", "hint": "Official permission or power to do something."},
+        {"word": "collaboration", "hint": "The action of working with someone to produce something."},
+        {"word": "consideration", "hint": "Careful thought, typically over a period of time."},
+        {"word": "counterpart", "hint": "A person or thing holding a position corresponding to that in another place."},
+        {"word": "disappointment", "hint": "Sadness or displeasure caused by the non-fulfillment of one's hopes or expectations."},
+        {"word": "effectiveness", "hint": "The degree to which something is successful in producing a desired result."},
+        {"word": "extraordinary", "hint": "Very unusual or remarkable."},
+        {"word": "fluctuation", "hint": "Irregular rising and falling in number or amount."},
+        {"word": "headache", "hint": "A continuous pain in the head."},
+        {"word": "immediately", "hint": "At once; instantly."},
+        {"word": "jurisdiction", "hint": "The official power to make legal decisions and judgments."},
+        {"word": "kindergarten", "hint": "A school or class for young children."},
+        {"word": "multimedia", "hint": "Using more than one medium of expression or communication."},
+        {"word": "nevertheless", "hint": "In spite of that; notwithstanding; all the same."},
+ 
+                { word: "quicksilver", hint: "The element Mercury." },
+                { word: "xylophone", hint: "Musical instrument with wooden bars." },
+                { word: "juxtapose", hint: "Place side by side for contrast." },
+                { word: "labyrinth", hint: "A complicated irregular network of passages." },
+                { word: "paradox", hint: "A seemingly absurd or self-contradictory statement." },
+                { word: "pneumonia", hint: "A lung infection." },
+                { word: "rhythm", hint: "A strong, regular, repeated pattern of movement or sound." },
+                { word: "synergy", hint: "Interaction producing a combined greater effect." },
+                { word: "unpredictable", hint: "Cannot be foreseen or known beforehand." },
+                { word: "vortex", hint: "A mass of whirling fluid or air." },
+                { word: "extraneous", hint: "Irrelevant or unrelated to the subject." },
+                { word: "metaphor", hint: "Figure of speech directly comparing two unlike things." },
+                { word: "serendipity", hint: "The occurrence of events by chance in a happy way." },
+                { word: "transcribe", hint: "Put thoughts, speech, or data into written form." },
+                { word: "acronym", hint: "An abbreviation formed from initial letters." },
+                { word: "hypothesis", hint: "A proposed explanation made on the basis of limited evidence." },
+                { word: "millennium", hint: "A period of one thousand years." },
+                { word: "quintessence", hint: "The most perfect or typical example." },
+                { word: "vociferous", hint: "Crying out noisily." },
+                { word: "whirlwind", hint: "A rapidly rotating mass of air." }
+            ]
+        };
+
+        const DIFFICULTY_SETTINGS = {
+            EASY: { time: 30, points: 1 },
+            MEDIUM: { time: 60, points: 2 },
+            HARD: { time: 90, points: 3 }
+        };
+
+        let originalWord = "";
+        let currentHint = "";
+        let hintUsed = false; // New state to track hint usage
+        let score = 0;
+        let highScore = 0;
+        let currentDifficulty = 'MEDIUM'; 
+        
+        let timeRemaining = 0;
+        let gameTimer = null;
+        let gameActive = false;
+        
+        let db, auth, userId, isAuthReady = false;
+
+
+        // --- DOM ELEMENTS ---
+        const scrambledWordEl = document.getElementById('scrambled-word');
+        const userInputEl = document.getElementById('user-input');
+        const submitButtonEl = document.getElementById('submit-button');
+        const newWordButtonEl = document.getElementById('new-word-button');
+        const hintButtonEl = document.getElementById('hint-button'); // New Hint Button
+        const feedbackEl = document.getElementById('feedback-message');
+        const scoreDisplayEl = document.getElementById('score-display');
+        const highScoreEl = document.getElementById('high-score');
+        const timerDisplayEl = document.getElementById('timer-display');
+        const difficultySelectorEl = document.getElementById('difficulty-selector');
+
+
+        // --- FIREBASE & HIGH SCORE LOGIC ---
+
+        /**
+         * Initializes Firebase and authenticates the user.
+         */
+        async function initializeFirebase() {
+            if (!firebaseConfig) {
+                console.error("Firebase config not found. High score tracking will not work.");
+                isAuthReady = true;
+                updateDifficulty(currentDifficulty); // Start game without Firebase
+                return;
+            }
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Handle authentication
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        isAuthReady = true;
+                        console.log("Firebase authenticated. User ID:", userId);
+                        loadHighScore();
+                        // Initialize game settings after auth is ready
+                        updateDifficulty(currentDifficulty); 
+                    } else {
+                        userId = null;
+                        isAuthReady = true;
+                        console.log("Firebase authentication failed or user signed out.");
+                        updateDifficulty(currentDifficulty); 
+                    }
+                });
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                isAuthReady = true; 
+                updateDifficulty(currentDifficulty);
+            }
+        }
+
+        /**
+         * Loads the high score from Firestore.
+         */
+        async function loadHighScore() {
+            if (!db || !isAuthReady) return;
+
+            // Public data path: /artifacts/{appId}/public/data/scramble_high_score/global
+            const highScorePath = `artifacts/${appId}/public/data/scramble_high_score/global`;
+            const docRef = doc(db, highScorePath);
+
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    highScore = data.score || 0;
+                    highScoreEl.textContent = highScore;
+                } else {
+                    highScore = 0;
+                    highScoreEl.textContent = 0;
+                }
+            } catch (error) {
+                console.error("Error loading high score:", error);
+            }
+        }
+
+        /**
+         * Saves the new high score to Firestore if the current score is higher.
+         */
+        async function saveHighScore() {
+            // Save only if score is greater than or equal to current high score
+            if (!db || !isAuthReady || score < highScore) return;
+
+            highScore = score;
+            highScoreEl.textContent = highScore;
+            
+            const highScorePath = `artifacts/${appId}/public/data/scramble_high_score/global`;
+            const docRef = doc(db, highScorePath);
+
+            try {
+                await setDoc(docRef, { 
+                    score: highScore, 
+                    updatedAt: new Date().toISOString(),
+                    updatedBy: userId || 'anonymous'
+                });
+                console.log("New high score saved successfully:", highScore);
+            } catch (error) {
+                console.error("Error saving high score:", error);
+            }
+        }
+
+
+        // --- UTILITY FUNCTIONS ---
+
+        /**
+         * Shuffles the letters of a word using the Fisher-Yates algorithm.
+         * @param {string} word The word to scramble.
+         * @returns {string} The scrambled word.
+         */
+        function scrambleWord(word) {
+            const letters = word.split('');
+            // Ensure the scrambled word is not the same as the original
+            let scrambled = '';
+            do {
+                for (let i = letters.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [letters[i], letters[j]] = [letters[j], letters[i]];
+                }
+                scrambled = letters.join('');
+            } while (scrambled === word && letters.length > 1);
+            
+            return scrambled;
+        }
+
+        /**
+         * Updates the score and the score display.
+         * @param {number} points Points to add or subtract.
+         */
+        function updateScore(points) {
+            saveHighScore(); // Check and save if the current score is a new high score
+            score = Math.max(0, score + points); // Score cannot go below 0
+            scoreDisplayEl.textContent = score;
+        }
+
+        /**
+         * Clears feedback after a short delay.
+         */
+        function clearFeedback() {
+            setTimeout(() => {
+                feedbackEl.innerHTML = '';
+            }, 2000);
+        }
+
+        /**
+         * Formats seconds into MM:SS string.
+         * @param {number} seconds The time remaining in seconds.
+         * @returns {string} Formatted time string.
+         */
+        function formatTime(seconds) {
+            const s = String(seconds % 60).padStart(2, '0');
+            const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        // --- TIMER LOGIC ---
+
+        /**
+         * Starts the countdown timer.
+         */
+        function startTimer() {
+            stopTimer(); // Clear any existing timer
+            
+            const initialTime = DIFFICULTY_SETTINGS[currentDifficulty].time;
+            timeRemaining = initialTime;
+            timerDisplayEl.textContent = formatTime(timeRemaining);
+            timerDisplayEl.classList.remove('text-red-500', 'text-yellow-500');
+            timerDisplayEl.classList.add('text-white');
+
+            gameTimer = setInterval(() => {
+                timeRemaining--;
+                timerDisplayEl.textContent = formatTime(timeRemaining);
+
+                if (timeRemaining <= 10) {
+                    // Flash red in the last 10 seconds
+                    timerDisplayEl.classList.remove('text-white', 'text-yellow-500');
+                    timerDisplayEl.classList.add('text-red-500');
+                } else if (timeRemaining <= 20) {
+                    // Flash yellow in the last 20 seconds
+                    timerDisplayEl.classList.remove('text-white', 'text-red-500');
+                    timerDisplayEl.classList.add('text-yellow-500');
+                }
+
+                if (timeRemaining <= 0) {
+                    gameOver();
+                }
+            }, 1000);
+        }
+
+        /**
+         * Stops the countdown timer.
+         */
+        function stopTimer() {
+            if (gameTimer) {
+                clearInterval(gameTimer);
+                gameTimer = null;
+            }
+        }
+
+        /**
+         * Handles the end of the game (timer ran out).
+         */
+        function gameOver() {
+            stopTimer();
+            gameActive = false;
+            saveHighScore(); 
+
+            scrambledWordEl.textContent = originalWord.toUpperCase();
+            scrambledWordEl.classList.remove('text-indigo-400');
+            scrambledWordEl.classList.add('text-red-500');
+            
+            displayFeedback(`Time's up! The word was "${originalWord.toUpperCase()}". Game Over!`, 'error');
+            
+            // Disable interaction
+            userInputEl.disabled = true;
+            submitButtonEl.disabled = true;
+            hintButtonEl.disabled = true;
+        }
+        
+        // --- HINT LOGIC ---
+
+        /**
+         * Reveals the hint for the current word, without deducting points.
+         */
+        function showHint() {
+            if (!gameActive) {
+                displayFeedback("Start a game first!", 'error');
+                return;
+            }
+            if (hintUsed) {
+                displayFeedback("Hint already used for this word!", 'error');
+                return;
+            }
+
+            // const hintCost = 2; // Original cost
+            // updateScore(-hintCost); // *** LINE COMMENTED OUT TO GIVE FREE HINT ***
+            hintUsed = true;
+            hintButtonEl.disabled = true;
+
+            // Updated display message to reflect the free hint
+            displayFeedback(`Hint: ${currentHint} (Free!)`, 'hint');
+        }
+
+        // --- GAME LOGIC ---
+
+        /**
+         * Updates the game difficulty setting and resets the game state.
+         * @param {string} newDifficulty 'EASY', 'MEDIUM', or 'HARD'.
+         */
+        function updateDifficulty(newDifficulty) {
+            saveHighScore(); // Save score before full reset
+            currentDifficulty = newDifficulty;
+            const timeLimit = DIFFICULTY_SETTINGS[currentDifficulty].time;
+            timerDisplayEl.textContent = formatTime(timeLimit);
+            startNewWord(true); // Always force a score reset when difficulty changes
+        }
+
+        /**
+         * Starts a new game or moves to the next word.
+         * @param {boolean} resetScore If true, resets the score to 0.
+         */
+        function startNewWord(resetScore = true) {
+            if (resetScore) {
+                updateScore(0 - score); // Reset score to 0 by subtracting current score
+            }
+
+            const wordList = WORDS[currentDifficulty];
+            const randomIndex = Math.floor(Math.random() * wordList.length);
+            const wordObject = wordList[randomIndex];
+            
+            originalWord = wordObject.word;
+            currentHint = wordObject.hint; // Store the new hint
+            hintUsed = false; // Reset hint usage
+            
+            userInputEl.value = '';
+            scrambledWordEl.textContent = scrambleWord(originalWord);
+            scrambledWordEl.classList.remove('text-red-500', 'text-error-color', 'text-success-color');
+            scrambledWordEl.classList.add('text-indigo-400');
+            
+            feedbackEl.textContent = '';
+            userInputEl.focus();
+
+            // Enable interaction
+            userInputEl.disabled = false;
+            submitButtonEl.disabled = false;
+            hintButtonEl.disabled = false;
+            gameActive = true;
+            
+            startTimer(); // Start the timer for the new word
+
+            console.log(`Original Word (for testing, Difficulty: ${currentDifficulty}): ${originalWord}`);
+        }
+
+        /**
+         * Handles the user submitting their guess.
+         */
+        function checkGuess() {
+            if (!gameActive) {
+                displayFeedback("Press 'Start New Game' to play!", 'error');
+                return;
+            }
+
+            const userGuess = userInputEl.value.trim().toLowerCase();
+            
+            if (!userGuess) {
+                displayFeedback("Please enter a word!", 'error');
+                return;
+            }
+
+            const points = DIFFICULTY_SETTINGS[currentDifficulty].points;
+
+            // Check if the guess matches the original word
+            if (userGuess === originalWord) {
+                stopTimer();
+                displayFeedback(`Correct! +${points} points! 🎉 Loading next word...`, 'success');
+                scrambledWordEl.classList.remove('text-indigo-400', 'text-red-500');
+                scrambledWordEl.classList.add('text-success-color');
+                updateScore(points);
+
+                // Wait a moment then load the next word
+                setTimeout(() => {
+                    startNewWord(false); 
+                }, 1500);
+
+            } else {
+                displayFeedback("Incorrect. Try again! -1 point.", 'error');
+                scrambledWordEl.classList.remove('text-indigo-400', 'text-success-color');
+                scrambledWordEl.classList.add('text-error-color');
+                updateScore(-1);
+            }
+            userInputEl.value = '';
+        }
+
+        /**
+         * Displays a formatted feedback message.
+         * @param {string} message The message to display.
+         * @param {('success'|'error'|'hint')} type The type of feedback.
+         */
+        function displayFeedback(message, type) {
+            let bgColor, textColor;
+            if (type === 'success') {
+                bgColor = 'bg-green-800';
+                textColor = 'text-green-300';
+            } else if (type === 'error') {
+                bgColor = 'bg-red-800';
+                textColor = 'text-red-300';
+            } else if (type === 'hint') {
+                bgColor = 'bg-yellow-800';
+                textColor = 'text-yellow-300';
+            }
+
+            feedbackEl.innerHTML = `
+                <p class="font-semibold px-4 py-1 rounded-full text-sm transition duration-300 ${bgColor} ${textColor}">
+                    ${message}
+                </p>
+            `;
+            // Clear only if it was an error/try again message
+            if (type === 'error') {
+                clearFeedback();
+            }
+        }
+
+
+        // --- EVENT LISTENERS ---
+
+        submitButtonEl.addEventListener('click', checkGuess);
+        // Hint button listener
+        hintButtonEl.addEventListener('click', showHint);
+        // When "New Word" is clicked, force a full game reset (using current difficulty)
+        newWordButtonEl.addEventListener('click', () => updateDifficulty(currentDifficulty)); 
+        
+        // Difficulty selector change listener
+        difficultySelectorEl.addEventListener('change', (e) => {
+            updateDifficulty(e.target.value);
+        });
+
+        // Allow submission via Enter key in the input field
+        userInputEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                checkGuess();
+            }
+        });
+
+        // --- INITIALIZATION ---
+        window.onload = function() {
+            // Set the dropdown to the initial state (Medium)
+            difficultySelectorEl.value = currentDifficulty;
+            // Initialize Firebase and start the game after auth check
+            initializeFirebase();
+        };
+
+    </script>
+</body>
+</html>
