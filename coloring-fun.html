@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coloring Fun Game</title>
+    <!-- Load Tailwind CSS for utility classes -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Define Inter font */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #e0f7fa; /* Light Blue Background */
+        }
+
+        #game-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            max-width: 90vw;
+            width: 550px; /* Increased max width to accommodate 20x20 grid */
+        }
+
+        h1 {
+            color: #00796b; /* Teal */
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        /* --- Palette & Swatch Styling --- */
+        #color-palette {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f0f4f8;
+            border-radius: 8px;
+        }
+
+        .color-swatch {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .color-swatch.active {
+            border-color: #00796b; /* Highlight with Teal */
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+        }
+        
+        /* Eraser Specifics */
+        #eraser-swatch {
+            background-color: #e0e0e0 !important;
+            color: #424242;
+        }
+
+        /* Custom Color Picker */
+        #custom-color-picker {
+            width: 35px;
+            height: 35px;
+            border: none;
+            padding: 0;
+            margin-left: 10px;
+            cursor: pointer;
+            background: none;
+            border-radius: 50%;
+            overflow: hidden;
+            outline: none;
+            transition: transform 0.2s;
+        }
+
+        /* --- Coloring Grid Styling --- */
+        #coloring-grid {
+            display: grid;
+            grid-template-columns: repeat(20, minmax(0, 1fr)); /* Updated to 20 columns */
+            grid-template-rows: repeat(20, minmax(0, 1fr)); /* Updated to 20 rows */
+            width: 90%;
+            aspect-ratio: 1 / 1; /* Keep it square */
+            border: 3px solid #333;
+            margin: 20px auto;
+            max-width: 450px;
+        }
+
+        .grid-cell {
+            background-color: white; /* Default background */
+            border: 1px solid #e0e0e0; /* Subtle borders */
+            box-sizing: border-box;
+            cursor: crosshair;
+            transition: background-color 0.1s;
+        }
+        
+        /* --- Tool Selection --- */
+        #tool-selection {
+            margin-bottom: 15px;
+        }
+
+        .tool-button {
+            padding: 8px 15px;
+            margin: 0 5px;
+            border: 2px solid #00796b;
+            background-color: white;
+            color: #00796b;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .tool-button.active {
+            background-color: #00796b;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* --- Controls & Messages --- */
+        .control-group button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            margin: 5px;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        
+        #reset-button {
+            background-color: #ef5350; /* Red */
+        }
+        #reset-button:hover { background-color: #c62828; }
+
+        #save-button {
+            background-color: #4caf50; /* Green */
+        }
+        #save-button:hover { background-color: #388e3c; }
+
+        #load-button {
+            background-color: #29b6f6; /* Light Blue */
+        }
+        #load-button:hover { background-color: #0288d1; }
+
+        /* Custom Message Box for alerts */
+        #message-box {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.5s, transform 0.3s;
+            z-index: 1000;
+            pointer-events: none;
+            transform: translateY(-20px);
+        }
+        .message-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <h1>Coloring Fun!</h1>
+        
+        <div id="tool-selection">
+            <button id="brush-tool" class="tool-button active">🖌️ Brush</button>
+            <button id="bucket-tool" class="tool-button">🧺 Fill</button>
+        </div>
+
+        <!-- Color Palette -->
+        <div id="color-palette">
+            <!-- Swatches will be generated here -->
+            <div id="eraser-swatch" class="color-swatch" data-color="white" title="Eraser">🗑️</div> 
+            <input type="color" id="custom-color-picker" value="#000000" title="Custom Color">
+        </div>
+
+        <!-- Coloring Grid -->
+        <div id="coloring-grid">
+            <!-- Grid cells will be generated by JavaScript -->
+        </div>
+        
+        <!-- Controls -->
+        <div class="control-group mt-5">
+            <button id="reset-button">🔄 Reset Canvas</button> 
+        </div>
+        <div id="save-load-controls" class="control-group mt-3">
+            <button id="save-button">💾 Save Progress</button>
+            <button id="load-button">📂 Load Progress</button>
+        </div>
+        
+    </div>
+
+    <!-- Message Box -->
+    <div id="message-box"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Elements ---
+            const colorPalette = document.getElementById('color-palette');
+            const coloringGrid = document.getElementById('coloring-grid');
+            const resetButton = document.getElementById('reset-button');
+            const saveButton = document.getElementById('save-button');
+            const loadButton = document.getElementById('load-button');
+            const eraserSwatch = document.getElementById('eraser-swatch');
+            const customColorPicker = document.getElementById('custom-color-picker');
+            const brushTool = document.getElementById('brush-tool');
+            const bucketTool = document.getElementById('bucket-tool');
+            const messageBox = document.getElementById('message-box');
+
+            // --- State Variables and Constants ---
+            const colors = [
+                '#FF5733', '#33FF57', '#3357FF', '#FF33A1', '#33FFF6', '#F3FF33', '#9933FF', 
+                '#FFC107', '#00BCD4', '#9C27B0', '#795548', '#E91E63', '#AEEA00', '#304FFE', 
+                '#FF3D00', '#1DE9B6', '#607D8B', '#673AB7', // Existing 18 colors
+                '#004D40', '#4FC3F7', '#B71C1C', '#B2FF59', '#FF6F00', '#1A237E', 
+                '#FFFDE7', '#212121', '#03A9F4', '#FFEB3B', '#C5CAE9', '#009688' // Added 12 new colors
+            ];
+            const GRID_SIZE = 20; // UPDATED to 20x20 grid
+            const OUTLINE_COLOR = '#424242'; // Dark gray for the outline
+            
+            let activeColor = colors[0]; 
+            let currentTool = 'brush'; 
+
+            // --- Utility Functions ---
+
+            /** Displays a non-intrusive message in the corner of the screen. */
+            function showMessage(text, isError = false) {
+                messageBox.textContent = text;
+                messageBox.style.backgroundColor = isError ? '#D32F2F' : '#4CAF50';
+                messageBox.classList.add('message-visible');
+                messageBox.classList.remove('message-hidden');
+                
+                setTimeout(() => {
+                    messageBox.classList.remove('message-visible');
+                    messageBox.classList.add('message-hidden');
+                }, 3000);
+            }
+
+            /** Defines a simple shape (e.g., a stylized "Heart") using cell indices. Scaled for 20x20 grid. */
+            function getOutlineIndices(rows, cols) {
+                const indices = [];
+                const center = Math.floor(cols / 2); // 10
+
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const index = r * cols + c;
+                        
+                        // Heart shape logic scaled for 20x20 grid
+                        if (
+                            // Top lobes (row 3)
+                            (r === 3 && ((c >= center - 6 && c <= center - 3) || (c >= center + 3 && c <= center + 6))) ||
+                            // Main body V-shape (rows 4 through 16)
+                            (r > 3 && r < 17 && (c === center - (r - 2) || c === center + (r - 2))) ||
+                            // Tip (row 17)
+                            (r === 17 && c === center)
+                        ) {
+                            indices.push(index);
+                        }
+                    }
+                }
+                return Array.from(new Set(indices));
+            }
+
+            // --- 1. Initialize Color Palette ---
+            
+            colors.forEach(color => {
+                const swatch = document.createElement('div');
+                swatch.classList.add('color-swatch');
+                swatch.style.backgroundColor = color;
+                swatch.dataset.color = color;
+                
+                if (color === activeColor) {
+                    swatch.classList.add('active');
+                }
+
+                swatch.addEventListener('click', () => {
+                    // Remove 'active' class from all palette elements
+                    document.querySelectorAll('.color-swatch, #custom-color-picker').forEach(s => s.classList.remove('active'));
+                    
+                    activeColor = color;
+                    swatch.classList.add('active');
+                });
+
+                colorPalette.insertBefore(swatch, eraserSwatch);
+            });
+
+            // Handle Eraser Selection
+            eraserSwatch.addEventListener('click', () => {
+                document.querySelectorAll('.color-swatch, #custom-color-picker').forEach(s => s.classList.remove('active'));
+                activeColor = 'white'; 
+                eraserSwatch.classList.add('active');
+            });
+            
+            // Handle Custom Color Selection
+            customColorPicker.addEventListener('input', () => {
+                activeColor = customColorPicker.value;
+                document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+                customColorPicker.classList.add('active');
+            });
+            customColorPicker.addEventListener('click', () => {
+                document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+                customColorPicker.classList.add('active');
+                activeColor = customColorPicker.value;
+            });
+
+            // --- 2. Tool Switching Logic ---
+            const setActiveTool = (tool) => {
+                currentTool = tool;
+                if (tool === 'brush') {
+                    brushTool.classList.add('active');
+                    bucketTool.classList.remove('active');
+                } else {
+                    bucketTool.classList.add('active');
+                    brushTool.classList.remove('active');
+                }
+                showMessage(`Switched to ${tool.charAt(0).toUpperCase() + tool.slice(1)} Tool.`);
+            };
+
+            brushTool.addEventListener('click', () => setActiveTool('brush'));
+            bucketTool.addEventListener('click', () => setActiveTool('bucket'));
+
+
+            // --- 3. Initialize Coloring Grid (with Outline) ---
+            const totalCells = GRID_SIZE * GRID_SIZE; 
+            const outlineIndices = getOutlineIndices(GRID_SIZE, GRID_SIZE);
+            const allCells = [];
+
+            for (let i = 0; i < totalCells; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('grid-cell');
+                cell.dataset.index = i;
+                
+                if (outlineIndices.includes(i)) {
+                    cell.style.backgroundColor = OUTLINE_COLOR;
+                    cell.dataset.outline = 'true';
+                } else {
+                    cell.style.backgroundColor = 'white'; 
+                }
+                
+                cell.addEventListener('click', (event) => {
+                    const clickedCell = event.currentTarget;
+                    
+                    if (currentTool === 'brush') {
+                        // BRUSH MODE: Color only the clicked cell
+                        clickedCell.style.backgroundColor = activeColor;
+
+                    } else if (currentTool === 'bucket') {
+                        // BUCKET MODE (Simplified Flood Fill): 
+                        // Fill all non-outline cells that match the target color
+                        
+                        const targetColor = clickedCell.style.backgroundColor || 'white'; 
+                        
+                        // Don't fill if target color is the outline color or if we're trying to color the same thing
+                        if (targetColor === OUTLINE_COLOR || targetColor === activeColor) {
+                            return;
+                        }
+                        
+                        // Collect all cells that match the target color
+                        allCells.forEach(c => {
+                            if ((c.style.backgroundColor || 'white') === targetColor && c.dataset.outline !== 'true') {
+                                c.style.backgroundColor = activeColor;
+                            }
+                        });
+                    }
+                });
+
+                coloringGrid.appendChild(cell);
+                allCells.push(cell); // Store reference for bucket/save/load
+            }
+
+
+            // --- 4. Controls Functionality ---
+            
+            // Reset
+            resetButton.addEventListener('click', () => {
+                allCells.forEach(cell => {
+                    if (cell.dataset.outline === 'true') {
+                        cell.style.backgroundColor = OUTLINE_COLOR;
+                    } else {
+                        cell.style.backgroundColor = 'white';
+                    }
+                });
+                showMessage('Canvas reset successfully! Starting a new coloring session.');
+            });
+
+            // Save
+            saveButton.addEventListener('click', () => {
+                const colorsToSave = allCells.map(cell => cell.style.backgroundColor || 'white');
+
+                try {
+                    localStorage.setItem('coloringGameData', JSON.stringify(colorsToSave));
+                    showMessage('Progress saved successfully! ✅');
+                } catch (e) {
+                    console.error("Could not save to local storage:", e);
+                    showMessage('Failed to save progress.', true);
+                }
+            });
+
+            // Load
+            loadButton.addEventListener('click', () => {
+                const savedData = localStorage.getItem('coloringGameData');
+                
+                if (savedData) {
+                    try {
+                        const loadedColors = JSON.parse(savedData);
+                        
+                        if (loadedColors.length === allCells.length) {
+                            allCells.forEach((cell, index) => {
+                                cell.style.backgroundColor = loadedColors[index];
+                            });
+                            showMessage('Progress loaded successfully! 📂');
+                        } else {
+                            showMessage('Saved data size mismatch. Cannot load.', true);
+                        }
+                    } catch (e) {
+                        console.error("Error parsing saved data:", e);
+                        showMessage('Failed to load progress: Corrupted data.', true);
+                    }
+                } else {
+                    showMessage('No saved progress found.', true);
+                }
+            });
+            
+            // Set initial tool to active
+            brushTool.classList.add('active');
+            
+            // Ensure first color is active on load
+            const initialSwatch = document.querySelector(`.color-swatch[data-color="${colors[0]}"]`);
+            if (initialSwatch) {
+                initialSwatch.classList.add('active');
+            }
+
+        });
+    </script>
+</body>
+</html>

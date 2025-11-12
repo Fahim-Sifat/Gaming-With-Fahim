@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+     <link rel="canonical" href="https://gaming-with-fahim.pages.dev/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alphabet Adventure Game</title>
+     <script async src="https://www.googletagmanager.com/gtag/js?id=G-MC9MB92PM9"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-MC9MB92PM9');
+</script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            /* DARK MODE: Very Dark Background */
+            background-color: #121212; 
+            /* DARK MODE: Light Text */
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        .game-container {
+            /* DARK MODE: Darker Container */
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 15px;
+            /* Adjusted Shadow for Dark Mode */
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            width: 100%;
+            max-width: 450px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            /* Brighter Teal for Contrast */
+            color: #00bcd4; 
+            margin-bottom: 25px;
+        }
+
+        /* Difficulty Selector Styling */
+        .difficulty-control {
+            margin-bottom: 25px;
+            padding: 12px;
+            /* Darker background for control panel */
+            background-color: #333300; 
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        #difficulty {
+            padding: 10px;
+            border-radius: 6px;
+            /* Bright border and dark background for select box */
+            border: 2px solid #ffc107; 
+            background-color: #222;
+            color: #fff;
+            font-size: 1em;
+            margin-left: 10px;
+            transition: all 0.3s;
+        }
+        
+        #difficulty:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.5);
+        }
+
+        /* Stats Bar Styling (3 columns) */
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1em;
+            font-weight: bold;
+            margin-bottom: 30px;
+            padding: 10px;
+            /* Dark Teal Border */
+            border: 2px solid #004d40;
+            /* Dark Background for Stats */
+            background-color: #2d2d2d;
+            border-radius: 10px;
+        }
+        
+        .stats p {
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        #high-score {
+            color: #ffc107; /* Bright Orange/Amber */
+        }
+        
+        #score {
+            color: #69f0ae; /* Bright Green/Lime */
+        }
+
+        .game-area {
+            /* Medium Dark Grey Background */
+            background-color: #2d2d2d;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        #current-letter {
+            font-size: 8em;
+            font-weight: 900;
+            /* Bright Red for Letter */
+            color: #ff5252; 
+            height: 120px;
+            line-height: 120px;
+            margin: 10px 0;
+            transition: transform 0.1s ease-out, color 0.1s;
+        }
+
+        #start-button {
+            background-color: #4caf50; /* Green */
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            text-align: center;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            box-shadow: 0 4px #388e3c;
+        }
+
+        #start-button:hover {
+            background-color: #388e3c;
+        }
+        
+        #start-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px #388e3c;
+        }
+
+        #message {
+            font-size: 1.3em;
+            font-weight: bold;
+            /* Bright Red Text */
+            color: #ff5252; 
+            margin-top: 25px;
+            padding: 15px;
+            /* Bright Red Border */
+            border: 2px solid #ff5252;
+            /* Dark, subtle red background */
+            background-color: #331a1a;
+            border-radius: 8px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Alphabet Adventure! 🚀</h1>
+        
+        <div class="difficulty-control">
+            <label for="difficulty">Select Challenge:</label>
+            <select id="difficulty">
+                <option value="easy">Easy (60s)</option>
+                <option value="medium" selected>Medium (30s)</option>
+                <option value="hard">Hard (15s)</option>
+            </select>
+        </div>
+        
+        <div class="stats">
+            <p>Score: <span id="score">0</span></p>
+            <p>Time: <span id="timer">30</span>s</p>
+            <p>High Score: <span id="high-score">0</span></p>
+        </div>
+
+        <div class="game-area">
+            <p>Type the letter you see:</p>
+            <div id="current-letter">A</div>
+        </div>
+
+        <button id="start-button">Start Game</button>
+        <div id="message" class="hidden"></div>
+    </div>
+
+    <script>
+        // --- Game State Variables ---
+        let score = 0;
+        let timeLeft = 0; 
+        let gameRunning = false;
+        let currentLetter = '';
+        let timerInterval;
+
+        // Define time limits for difficulties
+        const difficultySettings = {
+            easy: 60,
+            medium: 30,
+            hard: 15
+        };
+
+        // --- DOM Elements ---
+        const scoreDisplay = document.getElementById('score');
+        const timerDisplay = document.getElementById('timer');
+        const currentLetterDisplay = document.getElementById('current-letter');
+        const startButton = document.getElementById('start-button');
+        const messageBox = document.getElementById('message');
+        const difficultySelector = document.getElementById('difficulty'); 
+        const highScoreDisplay = document.getElementById('high-score'); 
+
+        // --- High Score Logic using localStorage ---
+
+        // Function to retrieve all high scores from localStorage
+        function getHighScores() {
+            // Attempt to parse existing scores, or return an empty object if none exist
+            const scores = localStorage.getItem('alphabetAdventureHighScores');
+            // Ensure all levels have a default of 0 if they don't exist
+            return scores ? JSON.parse(scores) : { easy: 0, medium: 0, hard: 0 };
+        }
+
+        // Function to update and save the high score for the current level
+        function checkAndSaveHighScore() {
+            const selectedLevel = difficultySelector.value;
+            const highScores = getHighScores();
+
+            // Check if the current score is higher than the stored score for this level
+            if (score > highScores[selectedLevel]) {
+                highScores[selectedLevel] = score; // Update the score
+                // Save the updated object back to localStorage
+                localStorage.setItem('alphabetAdventureHighScores', JSON.stringify(highScores));
+                
+                // Show a special message for a new high score!
+                messageBox.innerHTML = `🌟 **NEW HIGH SCORE!** Final Score: ${score} 🌟`;
+                
+            } else {
+                messageBox.innerHTML = `Game Over! Final Score: ${score}`;
+            }
+        }
+
+        // Function to update the displayed high score based on the current selection
+        function updateHighScoreDisplay() {
+            const selectedLevel = difficultySelector.value;
+            const highScores = getHighScores();
+            
+            // Display the score for the selected difficulty, defaulting to 0
+            const currentHighScore = highScores[selectedLevel] || 0;
+            highScoreDisplay.textContent = currentHighScore;
+        }
+
+
+        // --- Game Logic Functions ---
+
+        // Function to pick a new random letter
+        function pickNewLetter() {
+            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const randomIndex = Math.floor(Math.random() * alphabet.length);
+            currentLetter = alphabet[randomIndex];
+            currentLetterDisplay.textContent = currentLetter;
+        }
+
+        // The core timer function
+        function startTimer() {
+            const selectedLevel = difficultySelector.value;
+            timeLeft = difficultySettings[selectedLevel];
+            timerDisplay.textContent = timeLeft;
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000); 
+        }
+
+        // Function to start the game
+        function startGame() {
+            if (gameRunning) return; 
+
+            score = 0; 
+            scoreDisplay.textContent = score;
+            gameRunning = true;
+            startButton.classList.add('hidden'); 
+            messageBox.classList.add('hidden'); 
+            difficultySelector.disabled = true; // Disable selector during play
+            currentLetterDisplay.style.transform = 'scale(1)';
+
+            pickNewLetter(); 
+            startTimer(); 
+            
+            document.addEventListener('keydown', handleKeyPress);
+        }
+
+        // Function to handle user key press
+        function handleKeyPress(event) {
+            if (!gameRunning) return;
+
+            const pressedKey = event.key.toUpperCase();
+            
+            // Simple visual feedback on correct press
+            if (pressedKey === currentLetter) {
+                currentLetterDisplay.style.color = '#69f0ae'; // Flash green/lime for correct
+                setTimeout(() => {
+                    currentLetterDisplay.style.color = '#ff5252'; // Reset color
+                }, 100);
+
+                score++;
+                scoreDisplay.textContent = score;
+                pickNewLetter(); // Get a new letter
+            } else {
+                // Flash red on incorrect press (size scale is used for error visual)
+                currentLetterDisplay.style.transform = 'scale(1.1)'; 
+                setTimeout(() => {
+                    currentLetterDisplay.style.transform = 'scale(1)';
+                }, 100);
+            }
+        }
+
+        // Function to end the game
+        function endGame() {
+            gameRunning = false;
+            document.removeEventListener('keydown', handleKeyPress); 
+            
+            currentLetterDisplay.textContent = 'STOP'; 
+            
+            checkAndSaveHighScore(); 
+            messageBox.classList.remove('hidden'); 
+            
+            startButton.textContent = 'Play Again';
+            startButton.classList.remove('hidden'); 
+            difficultySelector.disabled = false; // Re-enable selector
+
+            updateHighScoreDisplay();
+        }
+
+        // --- Initialization and Event Listeners ---
+
+        // Update both Timer and High Score when difficulty changes
+        function initializeDisplay() {
+            const initialTime = difficultySettings[difficultySelector.value];
+            timerDisplay.textContent = initialTime;
+            updateHighScoreDisplay(); // Update high score display on change
+        }
+
+        startButton.addEventListener('click', startGame);
+        difficultySelector.addEventListener('change', initializeDisplay);
+
+        // Initial setup call
+        initializeDisplay(); 
+        currentLetterDisplay.textContent = 'A'; // Initial display before start
+    </script>
+</body>
+</html>

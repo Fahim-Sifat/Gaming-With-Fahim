@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="canonical" href="https://gaming-with-fahim.pages.dev/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guess The Number</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!--GA4-->
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MC9MB92PM9"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-MC9MB92PM9');
+</script>
+
+   <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1f2937; /* Darker slate background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        .game-card {
+            background-color: #374151; /* Slate card background */
+            transition: all 0.3s ease;
+        }
+        .button-primary {
+            background-color: #4f46e5; /* Indigo 600 */
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .button-primary:hover:not(:disabled) {
+            background-color: #4338ca; /* Indigo 700 */
+            transform: translateY(-1px);
+        }
+        .button-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container" class="game-card w-full max-w-md rounded-xl shadow-2xl p-6 md:p-8 text-white border border-indigo-500/50">
+        
+        <h1 class="text-3xl font-bold text-center mb-4 text-indigo-300">
+            Guess the Number
+        </h1>
+        <p class="text-center text-sm mb-6 text-gray-300">
+            I'm thinking of a number between 0 and 15. Can you guess it?
+        </p>
+
+        <!-- Attempts Counter -->
+        <div class="flex justify-between items-center mb-6 text-sm font-semibold text-gray-400">
+            <div>Attempts Left: <span id="attempts-left" class="text-indigo-400">7</span></div>
+            <div>Attempts Taken: <span id="attempts-taken" class="text-indigo-400">0</span></div>
+        </div>
+
+        <!-- Input and Button -->
+        <div class="flex gap-3 mb-6">
+            <input 
+                type="number" 
+                id="guess-input" 
+                min="0" 
+                max="15" 
+                placeholder="Enter your guess (0-15)" 
+                class="flex-grow p-3 rounded-lg border border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150"
+            />
+            <button 
+                id="guess-button" 
+                class="button-primary px-5 py-3 rounded-lg font-semibold shadow-md shadow-indigo-500/30"
+            >
+                Guess
+            </button>
+        </div>
+
+        <!-- Feedback Area -->
+        <div id="feedback" class="text-center p-4 rounded-lg text-lg font-medium min-h-[4rem] flex items-center justify-center bg-gray-700/50 transition-colors duration-300">
+            Start guessing!
+        </div>
+
+        <!-- New Game Button (Hidden initially) -->
+        <div id="new-game-area" class="mt-6 text-center hidden">
+             <button 
+                id="new-game-button" 
+                class="px-6 py-3 rounded-lg font-semibold bg-gray-500 hover:bg-gray-600 text-white shadow-md transition duration-150"
+            >
+                Start New Game
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Global variables for game state
+        let secretNumber;
+        let attemptsTaken;
+        // 7 attempts is still plenty for a 0-15 range (16 numbers).
+        const MAX_ATTEMPTS = 7; 
+        let isGameOver;
+
+        // DOM elements
+        const inputElement = document.getElementById('guess-input');
+        const guessButton = document.getElementById('guess-button');
+        const feedbackElement = document.getElementById('feedback');
+        const attemptsLeftElement = document.getElementById('attempts-left');
+        const attemptsTakenElement = document.getElementById('attempts-taken');
+        const newGameArea = document.getElementById('new-game-area');
+        const newGameButton = document.getElementById('new-game-button');
+
+        // Helper function to update the attempt counters
+        function updateAttemptsDisplay() {
+            attemptsTakenElement.textContent = attemptsTaken;
+            attemptsLeftElement.textContent = MAX_ATTEMPTS - attemptsTaken;
+        }
+
+        // Initialize the game state
+        function initGame() {
+            // Generate a random number between 0 and 15 (inclusive)
+            secretNumber = Math.floor(Math.random() * 16);
+            attemptsTaken = 0;
+            isGameOver = false;
+
+            // Reset UI
+            inputElement.value = '';
+            inputElement.disabled = false;
+            guessButton.disabled = false;
+            newGameArea.classList.add('hidden');
+            feedbackElement.textContent = "Enter your first guess!";
+            feedbackElement.classList.remove('bg-green-700', 'bg-red-700', 'bg-yellow-700');
+            feedbackElement.classList.add('bg-gray-700/50');
+            
+            updateAttemptsDisplay();
+            console.log("New game started. Secret number is:", secretNumber); // For debugging
+        }
+
+        // Function to end the game
+        function endGame(message, isWin) {
+            isGameOver = true;
+            inputElement.disabled = true;
+            guessButton.disabled = true;
+            newGameArea.classList.remove('hidden');
+
+            feedbackElement.textContent = message;
+            feedbackElement.classList.remove('bg-gray-700/50', 'bg-yellow-700');
+            feedbackElement.classList.add(isWin ? 'bg-green-700' : 'bg-red-700');
+        }
+
+        // Main game logic to check the guess
+        function checkGuess() {
+            if (isGameOver) return;
+
+            const guess = parseInt(inputElement.value, 10);
+            
+            // Input Validation (now checking against 0-15 range)
+            if (isNaN(guess) || guess < 0 || guess > 15) {
+                feedbackElement.textContent = "Please enter a valid number between 0 and 15.";
+                feedbackElement.classList.add('bg-yellow-700');
+                return;
+            }
+            
+            // Remove previous validation warning
+            feedbackElement.classList.remove('bg-yellow-700');
+            attemptsTaken++;
+            updateAttemptsDisplay();
+
+            // Game Logic
+            if (guess === secretNumber) {
+                endGame(`🎉 Correct! You guessed the number ${secretNumber} in ${attemptsTaken} attempts!`, true);
+            } else if (attemptsTaken >= MAX_ATTEMPTS) {
+                endGame(`Game Over! You ran out of attempts. The secret number was ${secretNumber}.`, false);
+            } else if (guess < secretNumber) {
+                feedbackElement.textContent = "Too Low! Try a higher number.";
+                feedbackElement.classList.add('bg-gray-700/50');
+            } else if (guess > secretNumber) {
+                feedbackElement.textContent = "Too High! Try a lower number.";
+                feedbackElement.classList.add('bg-gray-700/50');
+            }
+
+            // Clear input for next guess
+            inputElement.value = '';
+        }
+
+        // Event Listeners
+        guessButton.addEventListener('click', checkGuess);
+        newGameButton.addEventListener('click', initGame);
+        
+        // Allow pressing Enter key to submit guess
+        inputElement.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !isGameOver && !guessButton.disabled) {
+                checkGuess();
+            }
+        });
+
+        // Start the game when the page loads
+        window.onload = initGame;
+
+    </script>
+</body>
+</html>
