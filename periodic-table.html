@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="canonical" href="https://gaming-with-fahim.pages.dev/">
+  
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Periodic Table Quiz Game</title>
+      <!--GA4-->
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MC9MB92PM9"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-MC9MB92PM9');
+</script>
+
+    <style>
+        /* --- CSS STYLING (DARK THEME & RESPONSIVENESS) --- */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #121212; /* Dark background */
+            color: #e0e0e0; /* Light text */
+            margin: 0;
+            padding: 20px;
+        }
+
+        #game-container {
+            max-width: 1250px;
+            margin: 0 auto;
+            background: #1e1e1e; /* Slightly lighter dark container */
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            color: #bb86fc; /* Accent color for title */
+        }
+
+        /* Difficulty Selector */
+        #difficulty-selector {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #2c2c2c;
+            border-radius: 4px;
+        }
+        
+        #difficulty-selector label {
+            margin-right: 15px;
+            font-weight: bold;
+        }
+
+        #periodic-table-grid {
+            display: grid;
+            grid-template-columns: repeat(18, 1fr); 
+            grid-template-rows: repeat(7, 1fr); /* ONLY 7 ROWS FOR MAIN TABLE */
+            gap: 2px;
+            margin: 20px auto 0;
+            width: 100%;
+        }
+
+        .element-tile {
+            border: 1px solid #444; /* Darker border */
+            padding: 3px;
+            text-align: center;
+            font-size: 0.75em;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            line-height: 1.2;
+            height: 50px; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            user-select: none;
+            color: white !important; /* Ensure all text is white/light for the dark background */
+        }
+
+        .element-tile:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(187, 134, 252, 0.7); /* Hover shadow */
+            z-index: 10;
+        }
+
+        .symbol {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #fff;
+        }
+        
+        .atomic-number, .name {
+            color: rgba(255, 255, 255, 0.7); /* Darken sub-text for contrast, but keep it visible */
+        }
+        
+        /* F-BLOCK STYLING */
+        .f-block-container {
+            max-width: 1250px;
+            margin: 40px auto 20px; /* Separated and centered below the main grid */
+            padding: 10px 0;
+            background: #1e1e1e;
+            border-radius: 8px;
+        }
+
+        .f-block-label {
+            font-size: 0.9em;
+            font-weight: bold;
+            color: #bb86fc;
+            margin: 5px 0 10px;
+        }
+
+        .f-series-grid {
+            display: grid;
+            grid-template-columns: repeat(18, 1fr); /* 18 columns for alignment */
+            gap: 2px;
+            width: 100%;
+            margin-top: 5px;
+            padding: 0 50px; /* Inner padding to center the 15 tiles (14 elements + 1 spacer) */
+            box-sizing: border-box;
+        }
+
+        .f-placeholder {
+            background-color: #2c2c2c !important;
+            cursor: default !important;
+            font-size: 0.8em !important;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            line-height: 1.2;
+        }
+        .f-placeholder:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+
+        /* Score, High Score, and Timer container */
+        #score-box-container {
+            display: flex; 
+            justify-content: space-around; 
+            margin: 10px 0;
+            flex-wrap: wrap; /* Allows wrapping on small screens */
+        }
+
+        #score-box, #high-score-box, #timer-box, #question-box {
+            font-size: 1.2em;
+            margin: 10px 0;
+            font-weight: bold;
+            color: #e0e0e0;
+        }
+        
+        #timer-display {
+            color: #cf6679; /* Accent color for danger/timer */
+            font-size: 1.1em;
+        }
+
+        /* Game Feedback Styles */
+        .correct {
+            background-color: #03dac6 !important; /* Teal/Cyan for dark theme) */
+            color: #121212 !important; 
+            border-color: #03dac6;
+        }
+
+        .incorrect {
+            background-color: #cf6679 !important; /* Pink/Red for dark theme) */
+            color: white !important;
+            border-color: #cf6679;
+        }
+        
+        #message {
+            margin: 15px 0;
+            font-size: 1.1em;
+            min-height: 25px;
+        }
+        
+        /* Button Style */
+        #next-question {
+            padding: 10px 20px;
+            font-size: 1.1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            background-color: #bb86fc; /* Primary button color */
+            color: #121212;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        
+        #next-question:hover {
+            background-color: #985eff;
+        }
+
+
+        /* --- Category Color Coding (Retaining previous colors but adjusting contrast) --- */
+        .nonmetal { background-color: #018786; } 
+        .noble-gas { background-color: #6200ee; } 
+        .alkali-metal { background-color: #ff5252; color: #121212 !important;} 
+        .alkali-earth-metal { background-color: #4dd0e1; color: #121212 !important;} 
+        .halogen { background-color: #388e3c; } 
+        .transition-metal { background-color: #7c4dff; } 
+        .lanthanide { background-color: #ff9800; color: #121212 !important;} 
+        .actinide { background-color: #29b6f6; color: #121212 !important;} 
+        .metalloid { background-color: #aed581; color: #121212 !important;} 
+        .post-transition-metal { background-color: #fdd835; color: #121212 !important;}
+
+        /* --- RESPONSIVENESS MEDIA QUERY --- */
+        @media (max-width: 768px) {
+            #game-container {
+                padding: 10px;
+            }
+            .element-tile, .f-placeholder {
+                height: 35px; /* Smaller tile height */
+                font-size: 0.55em; /* Smaller base font */
+                padding: 1px;
+            }
+            .symbol {
+                font-size: 1em; /* Smaller symbol font */
+            }
+            .name {
+                 display: none; /* Hide element name to save space */
+            }
+            #score-box-container {
+                flex-direction: column; /* Stack score and high score */
+                align-items: center;
+            }
+            #score-box, #high-score-box, #timer-box, #question-box {
+                font-size: 1em;
+                margin: 5px 0;
+            }
+            #difficulty-selector label {
+                margin-right: 5px;
+            }
+            #difficulty-selector input {
+                margin-right: 10px;
+            }
+            .f-series-grid {
+                padding: 0 5px; /* Reduce padding for smaller screens */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Periodic Table Quiz Challenge ⚛️</h1>
+        
+        <div id="difficulty-selector">
+            <label for="difficulty">Select Difficulty:</label>
+            <input type="radio" id="easy" name="difficulty" value="20" checked>
+            <label for="easy">Easy (20s)</label>
+            <input type="radio" id="medium" name="difficulty" value="40">
+            <label for="medium">Medium (40s)</label>
+            <input type="radio" id="hard" name="difficulty" value="60">
+            <label for="hard">Hard (60s)</label>
+        </div>
+        
+        <div id="score-box-container">
+            <div id="score-box">
+                Score: <span id="score-correct">0</span> / <span id="score-total">0</span> (Goal: 10)
+            </div>
+            <div id="high-score-box">
+                High Score: <span id="high-score-display">0</span>
+            </div>
+        </div>
+        
+        <div id="timer-box">
+            Time Remaining: <span id="timer-display">20</span>s
+        </div>
+        
+        <div id="question-box">
+            Click "Start/Next Question" to start!
+        </div>
+        
+        <div id="message"></div>
+        
+        <div id="periodic-table-grid">
+            </div>
+
+        <div class="f-block-container">
+             <div class="f-block-label">Lanthanide and Actinide Series (f-block)</div>
+            <div id="lanthanide-series-grid" class="f-series-grid"></div>
+            <div id="actinide-series-grid" class="f-series-grid"></div>
+        </div>
+        <button id="next-question">Start/Next Question</button>
+    </div>
+    
+    <script>
+        
+        // --- DATA SOURCE (Period values are now chemically correct) ---
+        const ELEMENTS_DATA = [
+    { atomicNumber: 1, symbol: "H", name: "Hydrogen", group: 1, period: 1, type: "nonmetal" },
+    { atomicNumber: 2, symbol: "He", name: "Helium", group: 18, period: 1, type: "noble-gas" },
+    { atomicNumber: 3, symbol: "Li", name: "Lithium", group: 1, period: 2, type: "alkali-metal" },
+    { atomicNumber: 4, symbol: "Be", name: "Beryllium", group: 2, period: 2, type: "alkali-earth-metal" },
+    { atomicNumber: 5, symbol: "B", name: "Boron", group: 13, period: 2, type: "metalloid" },
+    { atomicNumber: 6, symbol: "C", name: "Carbon", group: 14, period: 2, type: "nonmetal" },
+    { atomicNumber: 7, symbol: "N", name: "Nitrogen", group: 15, period: 2, type: "nonmetal" },
+    { atomicNumber: 8, symbol: "O", name: "Oxygen", group: 16, period: 2, type: "nonmetal" },
+    { atomicNumber: 9, symbol: "F", name: "Fluorine", group: 17, period: 2, type: "halogen" },
+    { atomicNumber: 10, symbol: "Ne", name: "Neon", group: 18, period: 2, type: "noble-gas" },
+    { atomicNumber: 11, symbol: "Na", name: "Sodium", group: 1, period: 3, type: "alkali-metal" },
+    { atomicNumber: 12, symbol: "Mg", name: "Magnesium", group: 2, period: 3, type: "alkali-earth-metal" },
+    { atomicNumber: 13, symbol: "Al", name: "Aluminum", group: 13, period: 3, type: "post-transition-metal" },
+    { atomicNumber: 14, symbol: "Si", name: "Silicon", group: 14, period: 3, type: "metalloid" },
+    { atomicNumber: 15, symbol: "P", name: "Phosphorus", group: 15, period: 3, type: "nonmetal" },
+    { atomicNumber: 16, symbol: "S", name: "Sulfur", group: 16, period: 3, type: "nonmetal" },
+    { atomicNumber: 17, symbol: "Cl", name: "Chlorine", group: 17, period: 3, type: "halogen" },
+    { atomicNumber: 18, symbol: "Ar", name: "Argon", group: 18, period: 3, type: "noble-gas" },
+    { atomicNumber: 19, symbol: "K", name: "Potassium", group: 1, period: 4, type: "alkali-metal" },
+    { atomicNumber: 20, symbol: "Ca", name: "Calcium", group: 2, period: 4, type: "alkali-earth-metal" },
+    { atomicNumber: 21, symbol: "Sc", name: "Scandium", group: 3, period: 4, type: "transition-metal" },
+    { atomicNumber: 22, symbol: "Ti", name: "Titanium", group: 4, period: 4, type: "transition-metal" },
+    { atomicNumber: 23, symbol: "V", name: "Vanadium", group: 5, period: 4, type: "transition-metal" },
+    { atomicNumber: 24, symbol: "Cr", name: "Chromium", group: 6, period: 4, type: "transition-metal" },
+    { atomicNumber: 25, symbol: "Mn", name: "Manganese", group: 7, period: 4, type: "transition-metal" },
+    { atomicNumber: 26, symbol: "Fe", name: "Iron", group: 8, period: 4, type: "transition-metal" },
+    { atomicNumber: 27, symbol: "Co", name: "Cobalt", group: 9, period: 4, type: "transition-metal" },
+    { atomicNumber: 28, symbol: "Ni", name: "Nickel", group: 10, period: 4, type: "transition-metal" },
+    { atomicNumber: 29, symbol: "Cu", name: "Copper", group: 11, period: 4, type: "transition-metal" },
+    { atomicNumber: 30, symbol: "Zn", name: "Zinc", group: 12, period: 4, type: "transition-metal" },
+    { atomicNumber: 31, symbol: "Ga", name: "Gallium", group: 13, period: 4, type: "post-transition-metal" },
+    { atomicNumber: 32, symbol: "Ge", name: "Germanium", group: 14, period: 4, type: "metalloid" },
+    { atomicNumber: 33, symbol: "As", name: "Arsenic", group: 15, period: 4, type: "metalloid" },
+    { atomicNumber: 34, symbol: "Se", name: "Selenium", group: 16, period: 4, type: "nonmetal" },
+    { atomicNumber: 35, symbol: "Br", name: "Bromine", group: 17, period: 4, type: "halogen" },
+    { atomicNumber: 36, symbol: "Kr", name: "Krypton", group: 18, period: 4, type: "noble-gas" },
+    { atomicNumber: 37, symbol: "Rb", name: "Rubidium", group: 1, period: 5, type: "alkali-metal" },
+    { atomicNumber: 38, symbol: "Sr", name: "Strontium", group: 2, period: 5, type: "alkali-earth-metal" },
+    { atomicNumber: 39, symbol: "Y", name: "Yttrium", group: 3, period: 5, type: "transition-metal" },
+    { atomicNumber: 40, symbol: "Zr", name: "Zirconium", group: 4, period: 5, type: "transition-metal" },
+    { atomicNumber: 41, symbol: "Nb", name: "Niobium", group: 5, period: 5, type: "transition-metal" },
+    { atomicNumber: 42, symbol: "Mo", name: "Molybdenum", group: 6, period: 5, type: "transition-metal" },
+    { atomicNumber: 43, symbol: "Tc", name: "Technetium", group: 7, period: 5, type: "transition-metal" },
+    { atomicNumber: 44, symbol: "Ru", name: "Ruthenium", group: 8, period: 5, type: "transition-metal" },
+    { atomicNumber: 45, symbol: "Rh", name: "Rhodium", group: 9, period: 5, type: "transition-metal" },
+    { atomicNumber: 46, symbol: "Pd", name: "Palladium", group: 10, period: 5, type: "transition-metal" },
+    { atomicNumber: 47, symbol: "Ag", name: "Silver", group: 11, period: 5, type: "transition-metal" },
+    { atomicNumber: 48, symbol: "Cd", name: "Cadmium", group: 12, period: 5, type: "transition-metal" },
+    { atomicNumber: 49, symbol: "In", name: "Indium", group: 13, period: 5, type: "post-transition-metal" },
+    { atomicNumber: 50, symbol: "Sn", name: "Tin", group: 14, period: 5, type: "post-transition-metal" },
+    { atomicNumber: 51, symbol: "Sb", name: "Antimony", group: 15, period: 5, type: "metalloid" },
+    { atomicNumber: 52, symbol: "Te", name: "Tellurium", group: 16, period: 5, type: "metalloid" },
+    { atomicNumber: 53, symbol: "I", name: "Iodine", group: 17, period: 5, type: "halogen" },
+    { atomicNumber: 54, symbol: "Xe", name: "Xenon", group: 18, period: 5, type: "noble-gas" },
+    { atomicNumber: 55, symbol: "Cs", name: "Cesium", group: 1, period: 6, type: "alkali-metal" },
+    { atomicNumber: 56, symbol: "Ba", name: "Barium", group: 2, period: 6, type: "alkali-earth-metal" },
+    // Lanthanides (La is often placed in the main table, period 6, group 3)
+    { atomicNumber: 57, symbol: "La", name: "Lanthanum", group: 3, period: 6, type: "lanthanide" }, 
+    { atomicNumber: 58, symbol: "Ce", name: "Cerium", group: 4, period: 6, type: "lanthanide" }, // F-block
+    { atomicNumber: 59, symbol: "Pr", name: "Praseodymium", group: 5, period: 6, type: "lanthanide" },
+    { atomicNumber: 60, symbol: "Nd", name: "Neodymium", group: 6, period: 6, type: "lanthanide" },
+    { atomicNumber: 61, symbol: "Pm", name: "Promethium", group: 7, period: 6, type: "lanthanide" },
+    { atomicNumber: 62, symbol: "Sm", name: "Samarium", group: 8, period: 6, type: "lanthanide" },
+    { atomicNumber: 63, symbol: "Eu", name: "Europium", group: 9, period: 6, type: "lanthanide" },
+    { atomicNumber: 64, symbol: "Gd", name: "Gadolinium", group: 10, period: 6, type: "lanthanide" },
+    { atomicNumber: 65, symbol: "Tb", name: "Terbium", group: 11, period: 6, type: "lanthanide" },
+    { atomicNumber: 66, symbol: "Dy", name: "Dysprosium", group: 12, period: 6, type: "lanthanide" },
+    { atomicNumber: 67, symbol: "Ho", name: "Holmium", group: 13, period: 6, type: "lanthanide" },
+    { atomicNumber: 68, symbol: "Er", name: "Erbium", group: 14, period: 6, type: "lanthanide" },
+    { atomicNumber: 69, symbol: "Tm", name: "Thulium", group: 15, period: 6, type: "lanthanide" },
+    { atomicNumber: 70, symbol: "Yb", name: "Ytterbium", group: 16, period: 6, type: "lanthanide" },
+    { atomicNumber: 71, symbol: "Lu", name: "Lutetium", group: 17, period: 6, type: "lanthanide" }, // F-block
+    
+    // Main table Period 6 continues
+    { atomicNumber: 72, symbol: "Hf", name: "Hafnium", group: 4, period: 6, type: "transition-metal" },
+    { atomicNumber: 73, symbol: "Ta", name: "Tantalum", group: 5, period: 6, type: "transition-metal" },
+    { atomicNumber: 74, symbol: "W", name: "Tungsten", group: 6, period: 6, type: "transition-metal" },
+    { atomicNumber: 75, symbol: "Re", name: "Rhenium", group: 7, period: 6, type: "transition-metal" },
+    { atomicNumber: 76, symbol: "Os", name: "Osmium", group: 8, period: 6, type: "transition-metal" },
+    { atomicNumber: 77, symbol: "Ir", name: "Iridium", group: 9, period: 6, type: "transition-metal" },
+    { atomicNumber: 78, symbol: "Pt", name: "Platinum", group: 10, period: 6, type: "transition-metal" },
+    { atomicNumber: 79, symbol: "Au", name: "Gold", group: 11, period: 6, type: "transition-metal" },
+    { atomicNumber: 80, symbol: "Hg", name: "Mercury", group: 12, period: 6, type: "transition-metal" },
+    { atomicNumber: 81, symbol: "Tl", name: "Thallium", group: 13, period: 6, type: "post-transition-metal" },
+    { atomicNumber: 82, symbol: "Pb", name: "Lead", group: 14, period: 6, type: "post-transition-metal" },
+    { atomicNumber: 83, symbol: "Bi", name: "Bismuth", group: 15, period: 6, type: "post-transition-metal" },
+    { atomicNumber: 84, symbol: "Po", name: "Polonium", group: 16, period: 6, type: "metalloid" },
+    { atomicNumber: 85, symbol: "At", name: "Astatine", group: 17, period: 6, type: "halogen" },
+    { atomicNumber: 86, symbol: "Rn", name: "Radon", group: 18, period: 6, type: "noble-gas" },
+    { atomicNumber: 87, symbol: "Fr", name: "Francium", group: 1, period: 7, type: "alkali-metal" },
+    { atomicNumber: 88, symbol: "Ra", name: "Radium", group: 2, period: 7, type: "alkali-earth-metal" },
+    
+    // Actinides (Ac is often placed in the main table, period 7, group 3)
+    { atomicNumber: 89, symbol: "Ac", name: "Actinium", group: 3, period: 7, type: "actinide" }, 
+    { atomicNumber: 90, symbol: "Th", name: "Thorium", group: 4, period: 7, type: "actinide" }, // F-block
+    { atomicNumber: 91, symbol: "Pa", name: "Protactinium", group: 5, period: 7, type: "actinide" },
+    { atomicNumber: 92, symbol: "U", name: "Uranium", group: 6, period: 7, type: "actinide" },
+    { atomicNumber: 93, symbol: "Np", name: "Neptunium", group: 7, period: 7, type: "actinide" },
+    { atomicNumber: 94, symbol: "Pu", name: "Plutonium", group: 8, period: 7, type: "actinide" },
+    { atomicNumber: 95, symbol: "Am", name: "Americium", group: 9, period: 7, type: "actinide" },
+    { atomicNumber: 96, symbol: "Cm", name: "Curium", group: 10, period: 7, type: "actinide" },
+    { atomicNumber: 97, symbol: "Bk", name: "Berkelium", group: 11, period: 7, type: "actinide" },
+    { atomicNumber: 98, symbol: "Cf", name: "Californium", group: 12, period: 7, type: "actinide" },
+    { atomicNumber: 99, symbol: "Es", name: "Einsteinium", group: 13, period: 7, type: "actinide" },
+    { atomicNumber: 100, symbol: "Fm", name: "Fermium", group: 14, period: 7, type: "actinide" },
+    { atomicNumber: 101, symbol: "Md", name: "Mendelevium", group: 15, period: 7, type: "actinide" },
+    { atomicNumber: 102, symbol: "No", name: "Nobelium", group: 16, period: 7, type: "actinide" },
+    { atomicNumber: 103, symbol: "Lr", name: "Lawrencium", group: 17, period: 7, type: "actinide" }, 
+    
+    // Main table Period 7 continues
+    { atomicNumber: 104, symbol: "Rf", name: "Rutherfordium", group: 4, period: 7, type: "transition-metal" },
+    { atomicNumber: 105, symbol: "Db", name: "Dubnium", group: 5, period: 7, type: "transition-metal" },
+    { atomicNumber: 106, symbol: "Sg", name: "Seaborgium", group: 6, period: 7, type: "transition-metal" },
+    { atomicNumber: 107, symbol: "Bh", name: "Bohrium", group: 7, period: 7, type: "transition-metal" },
+    { atomicNumber: 108, symbol: "Hs", name: "Hassium", group: 8, period: 7, type: "transition-metal" },
+    { atomicNumber: 109, symbol: "Mt", name: "Meitnerium", group: 9, period: 7, type: "transition-metal" },
+    { atomicNumber: 110, symbol: "Ds", name: "Darmstadtium", group: 10, period: 7, type: "transition-metal" },
+    { atomicNumber: 111, symbol: "Rg", name: "Roentgenium", group: 11, period: 7, type: "transition-metal" },
+    { atomicNumber: 112, symbol: "Cn", name: "Copernicium", group: 12, period: 7, type: "transition-metal" },
+    { atomicNumber: 113, symbol: "Nh", name: "Nihonium", group: 13, period: 7, type: "post-transition-metal" },
+    { atomicNumber: 114, symbol: "Fl", name: "Flerovium", group: 14, period: 7, type: "post-transition-metal" },
+    { atomicNumber: 115, symbol: "Mc", name: "Moscovium", group: 15, period: 7, type: "post-transition-metal" },
+    { atomicNumber: 116, symbol: "Lv", name: "Livermorium", group: 16, period: 7, type: "post-transition-metal" },
+    { atomicNumber: 117, symbol: "Ts", name: "Tennessine", group: 17, period: 7, type: "halogen" },
+    { atomicNumber: 118, symbol: "Og", name: "Oganesson", group: 18, period: 7, type: "noble-gas" }
+];
+        // --- GAME LOGIC ---
+        
+        // Game Settings
+        const QUESTION_LIMIT = 10; 
+        const HIGH_SCORE_KEY = 'periodicTableHighScore';
+        let TIME_LIMIT_SECONDS = 20; // Default to Easy (20s)
+
+        // Game State Variables
+        let currentQuestion = null;
+        let totalCorrect = 0;   
+        let totalAnswered = 0;  
+        let questionTimer;
+        let timeLeft = TIME_LIMIT_SECONDS;
+        let currentHighScore = 0;
+
+        // Get DOM elements
+        const scoreCorrectElement = document.getElementById('score-correct');
+        const scoreTotalElement = document.getElementById('score-total');
+        const timerDisplay = document.getElementById('timer-display');
+        const tableGrid = document.getElementById('periodic-table-grid');
+        const questionBox = document.getElementById('question-box');
+        const messageBox = document.getElementById('message');
+        const nextButton = document.getElementById('next-question');
+        const difficultyRadios = document.querySelectorAll('input[name="difficulty"]');
+        const highScoreDisplay = document.getElementById('high-score-display'); 
+        
+        // NEW F-BLOCK DOM Elements
+        const lanthanideGrid = document.getElementById('lanthanide-series-grid');
+        const actinideGrid = document.getElementById('actinide-series-grid');
+
+
+        // --- Helper Functions ---
+
+        function loadHighScore() {
+            const storedScore = localStorage.getItem(HIGH_SCORE_KEY);
+            currentHighScore = storedScore ? parseInt(storedScore, 10) : 0;
+            highScoreDisplay.textContent = currentHighScore;
+        }
+
+        function gameOver() {
+            clearInterval(questionTimer);
+            
+            // Check for High Score
+            let finalMessage = `
+                <span style="font-size: 1.5em; color: #cf6679; font-weight: bold;">GAME OVER!</span><br>
+                Final Score: ${totalCorrect} out of ${QUESTION_LIMIT} questions correct!
+            `;
+            
+            if (totalCorrect > currentHighScore) {
+                currentHighScore = totalCorrect;
+                localStorage.setItem(HIGH_SCORE_KEY, currentHighScore);
+                highScoreDisplay.textContent = currentHighScore;
+                finalMessage += '<br><span style="color: #03dac6; font-weight: bold;">*** NEW HIGH SCORE! ***</span>';
+            }
+
+            // Disable all tiles
+            document.querySelectorAll('.element-tile').forEach(el => el.style.pointerEvents = 'none');
+            nextButton.style.display = 'none';
+            messageBox.innerHTML = finalMessage;
+            
+            // Enable difficulty selection again after game over
+            difficultyRadios.forEach(radio => radio.disabled = false); 
+        }
+
+        function checkTimer() {
+            timeLeft--;
+            timerDisplay.textContent = timeLeft;
+
+            if (timeLeft <= 5) {
+                timerDisplay.style.color = '#cf6679'; 
+            } else {
+                 timerDisplay.style.color = '#e0e0e0';
+            }
+
+
+            if (timeLeft <= 0) {
+                clearInterval(questionTimer);
+                checkAnswer(null, "TIME_OUT"); 
+            }
+        }
+        
+        // Helper to create a tile element
+        function createTile(element) {
+            const tile = document.createElement('div');
+            tile.classList.add('element-tile', element.type); 
+            tile.dataset.symbol = element.symbol;
+            tile.dataset.atomicNumber = element.atomicNumber;
+            
+            tile.innerHTML = `
+                <div class="atomic-number">${element.atomicNumber}</div>
+                <div class="symbol">${element.symbol}</div>
+                <div class="name">${element.name}</div>
+            `;
+            
+            tile.addEventListener('click', (e) => checkAnswer(tile, element.symbol));
+            return tile;
+        }
+        
+        // Helper to create the placeholder tile in the main table
+        function createPlaceholder(period, group, text) {
+            const placeholder = document.createElement('div');
+            placeholder.classList.add('element-tile', 'f-placeholder');
+            placeholder.style.gridColumn = group;
+            placeholder.style.gridRow = period;
+            placeholder.innerHTML = `<div class="symbol">${text}</div>`;
+            tableGrid.appendChild(placeholder);
+        }
+
+        // Helper to render the F-block series in its own grid
+        function renderSeries(series, gridContainer) {
+            // The F-block tiles are 15 elements (La-Lu or Ac-Lr). 
+            // We'll place them in columns 2 through 16 of the 18-column grid for proper centering 
+            // (1 space before, 2 spaces after).
+            
+            // Add a placeholder/label in the first column of the f-block grid for aesthetic alignment 
+            const labelPlaceholder = document.createElement('div');
+            labelPlaceholder.classList.add('f-placeholder');
+            labelPlaceholder.style.gridColumn = 1;
+            labelPlaceholder.textContent = (series[0].type === 'lanthanide') ? 'La-Lu' : 'Ac-Lr';
+            gridContainer.appendChild(labelPlaceholder);
+            
+            series.forEach((element, index) => {
+                const tile = createTile(element);
+                // Tiles occupy columns 2 through 16
+                tile.style.gridColumn = index + 2; 
+                gridContainer.appendChild(tile);
+            });
+        }
+
+
+        // 1. Render the Periodic Table from the data
+        function renderTable() {
+            tableGrid.innerHTML = '';
+            lanthanideGrid.innerHTML = '';
+            actinideGrid.innerHTML = '';
+            
+            let mainTableElements = [];
+            let lanthanides = [];
+            let actinides = [];
+
+            // 1. Separate the main table elements from the f-block elements
+            ELEMENTS_DATA.forEach(element => {
+                if (element.atomicNumber >= 58 && element.atomicNumber <= 71) {
+                    lanthanides.push(element); // F-block elements (Ce-Lu)
+                } else if (element.atomicNumber >= 90 && element.atomicNumber <= 103) {
+                    actinides.push(element); // F-block elements (Th-Lr)
+                } else {
+                    // Main table elements (H, He, Na, K, Ba, La, Hf, Ra, Ac, Rf, etc.)
+                    mainTableElements.push(element);
+                }
+            });
+            
+            // Render main table elements
+            mainTableElements.forEach(element => {
+                const tile = createTile(element);
+                tile.style.gridColumn = element.group; 
+                tile.style.gridRow = element.period;
+                tableGrid.appendChild(tile);
+            });
+
+
+            // 2. Add placeholders in the main table for the skipped elements
+            // Placeholder for Lanthanides (57-71) at Period 6, Group 3
+            // Since La (57) is included in mainTableElements, the placeholder represents 58-71
+            createPlaceholder(6, 3, '58-71'); 
+            // Placeholder for Actinides (89-103) at Period 7, Group 3
+            // Since Ac (89) is included in mainTableElements, the placeholder represents 90-103
+            createPlaceholder(7, 3, '90-103');
+            
+            // 3. Render the F-block series
+            renderSeries(lanthanides, lanthanideGrid);
+            renderSeries(actinides, actinideGrid);
+        }
+        
+        // Function to set timer based on difficulty
+        function setDifficulty(event) {
+            if (totalAnswered > 0 && totalAnswered < QUESTION_LIMIT) {
+                 alert("Please finish the current game or refresh to change difficulty!");
+                 document.querySelector(`input[value="${TIME_LIMIT_SECONDS}"]`).checked = true;
+                 return;
+            }
+            TIME_LIMIT_SECONDS = parseInt(event.target.value);
+            timerDisplay.textContent = TIME_LIMIT_SECONDS;
+        }
+
+
+        // 2. Start a new round / set the question
+        function newQuestion() {
+            if (totalAnswered >= QUESTION_LIMIT) {
+                gameOver();
+                return; 
+            }
+            
+            // Disable difficulty selection during the game
+            difficultyRadios.forEach(radio => radio.disabled = true);
+            
+            // --- Timer Setup ---
+            clearInterval(questionTimer);
+            timeLeft = TIME_LIMIT_SECONDS;
+            timerDisplay.textContent = timeLeft;
+            timerDisplay.style.color = '#e0e0e0'; 
+            questionTimer = setInterval(checkTimer, 1000);
+            
+            // Reset state and visuals...
+            messageBox.textContent = 'Click on the correct element!';
+            document.querySelectorAll('.element-tile').forEach(el => {
+                el.classList.remove('correct', 'incorrect');
+                el.style.pointerEvents = 'auto'; // Re-enable clicks
+            });
+            nextButton.style.display = 'none';
+
+            // Pick a random element
+            const randomIndex = Math.floor(Math.random() * ELEMENTS_DATA.length);
+            currentQuestion = ELEMENTS_DATA[randomIndex];
+            
+            // --- 4 CLUE TYPES ---
+            const clueTypes = ['symbol', 'atomicNumber', 'position', 'name'];
+            const selectedClueType = clueTypes[Math.floor(Math.random() * clueTypes.length)];
+
+            let questionText;
+            
+            if (selectedClueType === 'symbol') {
+                questionText = `Find the element with symbol: **${currentQuestion.symbol}**`;
+            } else if (selectedClueType === 'atomicNumber') {
+                questionText = `Find the element with atomic number: **${currentQuestion.atomicNumber}**`;
+            } else if (selectedClueType === 'position') {
+                let displayGroup = currentQuestion.group;
+                let displayPeriod = currentQuestion.period;
+                let displaySeries = '';
+                
+                if (currentQuestion.atomicNumber >= 58 && currentQuestion.atomicNumber <= 71) {
+                    displaySeries = ' (Lanthanide Series)';
+                    displayGroup = 'f-block row';
+                } else if (currentQuestion.atomicNumber >= 90 && currentQuestion.atomicNumber <= 103) {
+                     displaySeries = ' (Actinide Series)';
+                     displayGroup = 'f-block row';
+                } else {
+                    displayGroup = `Group ${currentQuestion.group}`;
+                }
+
+
+                questionText = `Find the element in **Period ${displayPeriod}** and **${displayGroup}**${displaySeries}`;
+            } else if (selectedClueType === 'name') {
+                questionText = `Find the element named **${currentQuestion.name}**`;
+            }
+            
+            questionBox.innerHTML = questionText;
+            totalAnswered++; // Question is officially asked now
+        }
+
+        // 3. Check the user's clicked element and update score
+        function checkAnswer(clickedTile, clickedSymbol) {
+            clearInterval(questionTimer); 
+            
+            // Disable clicks on all tiles
+            document.querySelectorAll('.element-tile').forEach(el => el.style.pointerEvents = 'none');
+            
+            // Determine if the answer was correct
+            const isCorrect = (clickedSymbol !== "TIME_OUT" && clickedSymbol === currentQuestion.symbol);
+
+            if (isCorrect) {
+                clickedTile.classList.add('correct');
+                messageBox.textContent = `Correct! ${currentQuestion.name} (${currentQuestion.atomicNumber})`;
+                totalCorrect++; 
+            } else {
+                // Handle incorrect clicks or timeouts
+                if (clickedTile) clickedTile.classList.add('incorrect');
+                
+                const answeredElement = ELEMENTS_DATA.find(e => e.symbol === clickedSymbol);
+                // Need to handle the placeholder being clicked (it has no symbol data-attribute)
+                const answerText = (clickedSymbol === "TIME_OUT") 
+                    ? "Time ran out!" 
+                    : clickedTile && clickedTile.classList.contains('f-placeholder')
+                    ? "Wrong! You clicked a series placeholder." 
+                    : `Wrong! You clicked ${answeredElement ? answeredElement.name : 'an unknown spot'}.`;
+                    
+                messageBox.textContent = `${answerText} The correct answer was ${currentQuestion.name}.`;
+                
+                // Highlight the correct answer
+                const correctAnswerTile = document.querySelector(`[data-symbol="${currentQuestion.symbol}"]`);
+                if (correctAnswerTile) {
+                    correctAnswerTile.classList.add('correct');
+                }
+            }
+            
+            // Update the score display
+            scoreCorrectElement.textContent = totalCorrect; 
+            scoreTotalElement.textContent = totalAnswered;
+            
+            // Game Over Check
+            if (totalAnswered < QUESTION_LIMIT) {
+                nextButton.style.display = 'block'; 
+            } else {
+                nextButton.style.display = 'none';
+                setTimeout(gameOver, 2000); 
+            }
+        }
+
+        // --- Game Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadHighScore(); // Load high score on load
+            renderTable();
+            // Set initial timer limit based on default checked radio (Easy: 20s)
+            TIME_LIMIT_SECONDS = parseInt(document.querySelector('input[name="difficulty"]:checked').value);
+            timerDisplay.textContent = TIME_LIMIT_SECONDS; 
+            
+            // Event listeners for difficulty change
+            difficultyRadios.forEach(radio => radio.addEventListener('change', setDifficulty));
+            
+            nextButton.addEventListener('click', newQuestion);
+            // Reset state variables for a clean start
+            totalCorrect = 0;
+            totalAnswered = 0; 
+            scoreCorrectElement.textContent = totalCorrect;
+            scoreTotalElement.textContent = totalAnswered;
+            questionBox.innerHTML = `Click **Start/Next Question** to begin the quiz of ${QUESTION_LIMIT} elements!`;
+        });
+        
+    </script>
+</body>
+</html>
