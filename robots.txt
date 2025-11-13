@@ -1,0 +1,3 @@
+User-agent:*
+Disallow:
+Sitemap:https://gaming-with-fahim.pages.dev/
