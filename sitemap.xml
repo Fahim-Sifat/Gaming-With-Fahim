@@ -1,167 +1,152 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-<!--Homepage-->
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-
-  <!--Extra pages-->
-
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/puzzle-strategy-games</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/action-adventure-games</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/simulation-games</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/learning-games</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  
-<!--Puzzle & Strategy-->  
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/tic-tac-toe</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/sudoku</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/chess</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/candy-crush</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/bubble-shooter</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/letter-scramble</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <!--Action Adventure-->
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/snake-game</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/rock-paper-scissor</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/droplets-catcher</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/space-blaster</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
+<urlset
+      xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+            http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+<!-- created with Free Online Sitemap Generator www.xml-sitemaps.com -->
 
 
-<!--Learning & Educational-->
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>1.00</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/categories.html</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/top-rated.html</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/community.html</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/login.html</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/tic-tac-toe</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/sudoku</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/chess</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/candy-crush</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/puzzle-strategy-games</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/snake-game</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/rock-paper-scissor</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/droplets-catcher</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/space-blaster</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/action-adventure-games</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/alphabet-adventure</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/number-guess</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/coloring-fun</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/math-mania</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/learning-games</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/about-us</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/privacypolicy</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/contact</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/terms-conditions</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/bubble-shooter</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/letter-scramble</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/periodic-table</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://gaming-with-fahim.pages.dev/privacy-policy.html</loc>
+  <lastmod>2025-11-15T08:48:09+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
 
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/alphabet-adventure</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/number-guess</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/coloring-fun</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/math-mania</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/periodic-table</loc>
-    <lastmod>2025-11-13</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <!--footer-->
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/about-us</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/privacypolicy</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/contact</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://gaming-with-fahim.pages.dev/terms-conditions</loc>
-    <lastmod>2025-11-12</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.6</priority>
-  </url>
 
 </urlset>
