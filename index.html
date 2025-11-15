@@ -48,6 +48,14 @@ l.parentNode.insertBefore(s, l);
 <!--Adsterra popunder-->
 <script type='text/javascript' src='//underpantsjokeimmunity.com/91/03/ce/9103ce3526ee254e8a2194e4110307c8.js'></script>
 
+ <!--Manifest file for pwa-->
+    <link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1f2937">
+   
+
+
+
+
 
 </head>
 <body>
@@ -238,6 +246,21 @@ l.parentNode.insertBefore(s, l);
         </div>
         <p>&copy; 2025 By Md. Fahim Shahryar Sifat. All rights reserved....</p>
     </footer>
+<!--SW.js file for pwa-->
+    <script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    // The scope will be the root directory ('/') where the sw.js file is located
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('Service Worker registered with scope:', registration.scope);
+      })
+      .catch(error => {
+        console.log('Service Worker registration failed:', error);
+      });
+  });
+}
+</script>
 
 </body>
 </html>
