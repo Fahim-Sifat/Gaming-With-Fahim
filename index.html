@@ -54,7 +54,20 @@ l.parentNode.insertBefore(s, l);
    
 
 
-
+<!--Tracking pwa-->
+<script>
+window.addEventListener('appinstalled', (event) => {
+  // Check if the gtag function is available before calling it
+  if (typeof gtag === 'function') {
+    // Send a custom event to your GA4 property
+    gtag('event', 'pwa_install', {
+      'event_category': 'pwa',
+      'event_label': 'installation_success'
+    });
+    console.log('PWA Installation Event tracked successfully.');
+  }
+});
+</script>
 
 
 </head>
